@@ -45,6 +45,17 @@ export function parseIdr(input: any): number {
   return Number.isFinite(n) ? (neg ? -Math.abs(n) : n) : 0
 }
 
+export function parseShopeeMoney(input: any): number {
+  if (input === null || input === undefined) return 0
+  const raw = String(input).trim().replace(/^="|"$/g, '').replace(/Rp/gi, '').replace(/\s/g, '')
+  if (!raw) return 0
+  // Shopee commission export uses dot as decimal separator, e.g. 769.945 = Rp 769.945,
+  // not Rp 769.945 ribu. Keep simple decimal values as decimals.
+  if (/^-?\d+\.\d+$/.test(raw)) return Number(raw)
+  if (/^-?\d+,\d+$/.test(raw)) return Number(raw.replace(',', '.'))
+  return parseIdr(raw)
+}
+
 function parseCsv(text: string) {
   return Papa.parse<Record<string, any>>(text.trim(), { header: true, skipEmptyLines: true, transformHeader: h => h.trim() })
 }
@@ -83,7 +94,7 @@ export function parseShopeeCsv(text: string) {
       clickDate: norm(col(row, 'Click Time', 'Waktu Klik')).slice(0, 10),
       product: norm(col(row, 'Item Name', 'Nama Barange', 'Nama Barang')),
       purchase: parseIdr(col(row, 'Purchase Value(Rp)', 'Purchase Value (Rp)', 'Nilai Pembelian(Rp)', 'Nilai Pembelian (Rp)')),
-      commission: parseIdr(col(row, 'Affiliate Net Commission(Rp)', 'Affiliate Net Commission (Rp)', 'Komisi Bersih Affiliate (Rp)')),
+      commission: parseShopeeMoney(col(row, 'Affiliate Net Commission(Rp)', 'Affiliate Net Commission (Rp)', 'Komisi Bersih Affiliate (Rp)')),
       tag: norm(col(row, 'Tag_link1')),
       platform: norm(col(row, 'Channel', 'Platform')) || 'Others',
     }

@@ -27,11 +27,13 @@ describe('parser', () => {
     expect(parsed.stats.usedSpend).toBe(314467)
     expect(parsed.stats.summarySkipped).toBe(1)
   })
-  it('analyzes Barry sample spend correctly', () => {
+  it('analyzes Barry sample spend and Shopee decimal commission correctly', () => {
     const result = analyze(metaBarry, shopeeBarry, 0)
     expect(result.totals.spend).toBe(314467)
     expect(result.quality.metaSpendRaw).toBe(628934)
     expect(result.quality.metaSummaryRowsSkipped).toBe(1)
+    expect(result.totals.commission).toBeCloseTo(2481.745)
+    expect(result.shopee.map(r => r.commission)).toEqual([1711.8, 769.945])
     expect(result.tags[0].tag).toBe('manurung')
     expect(result.tags[0].campaign).toBe('manurung')
     expect(result.tags[0].matchScore).toBe(100)
