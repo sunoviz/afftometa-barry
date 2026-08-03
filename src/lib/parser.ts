@@ -128,6 +128,7 @@ export function analyze(metaText: string, shopeeText: string, ppn = 0.11): Analy
   const orderIds = new Set(shopee.map(r => r.orderId).filter(Boolean))
   const clicks = meta.reduce((a, r) => a + r.clicks, 0)
   const lpViews = meta.reduce((a, r) => a + r.lpViews, 0)
+  const impressions = meta.reduce((a, r) => a + r.impressions, 0)
   const byDate = new Map<string, any>()
   for (const r of meta) { const o = byDate.get(r.date) || { date: r.date, spend: 0, commission: 0, orders: 0 }; o.spend += r.spend; byDate.set(r.date, o) }
   for (const r of shopee) { const d = r.orderDate || r.clickDate; const o = byDate.get(d) || { date: d, spend: 0, commission: 0, orders: 0 }; o.commission += r.commission; o.orders += 1; byDate.set(d, o) }
@@ -142,5 +143,5 @@ export function analyze(metaText: string, shopeeText: string, ppn = 0.11): Analy
   if (metaParsed.stats.summarySkipped) warnings.push(`${metaParsed.stats.summarySkipped} row summary Meta diskip biar spend tidak double count.`)
   if (metaParsed.stats.zeroSkipped) warnings.push(`${metaParsed.stats.zeroSkipped} row Meta nol diskip.`)
   const quality = { metaRows: metaParsed.stats.totalRows, metaRowsUsed: metaParsed.stats.usedRows, metaSummaryRowsSkipped: metaParsed.stats.summarySkipped, metaZeroRowsSkipped: metaParsed.stats.zeroSkipped, shopeeRows: shopeeParsed.stats.totalRows, shopeeRowsUsed: shopeeParsed.stats.usedRows, warnings, metaSpendRaw: metaParsed.stats.rawSpend, metaSpendUsed: spend, shopeeCommission: commission }
-  return { meta, shopee, quality, daily, campaigns, tags, totals: { spend, spendPpn, commission, net: commission - spendPpn, roas: spendPpn ? commission/spendPpn : 0, roi: spendPpn ? (commission-spendPpn)/spendPpn : 0, clicks, lpViews, orders: orderIds.size || shopee.length, ppn } }
+  return { meta, shopee, quality, daily, campaigns, tags, totals: { spend, spendPpn, commission, net: commission - spendPpn, roas: spendPpn ? commission/spendPpn : 0, roi: spendPpn ? (commission-spendPpn)/spendPpn : 0, clicks, lpViews, impressions, orders: orderIds.size || shopee.length, ppn } }
 }
