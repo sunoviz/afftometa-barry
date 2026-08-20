@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #f5f7fb;
-  background: #0b0d12;
+  color: #f0f0f0;
+  background: #0f0f0f;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -20,8 +20,8 @@ body,
 
 body {
   margin: 0;
-  background: #0b0d12;
-  color: #f5f7fb;
+  background: #0f0f0f;
+  color: #f0f0f0;
 }
 
 button,
@@ -38,13 +38,7 @@ button {
 input,
 button,
 label {
-  transition: all 0.16s ease;
-}
-
-input:focus,
-button:focus-visible,
-label:focus-within {
-  outline: none;
+  transition: all 0.14s ease;
 }
 
 .loginPage {
@@ -60,20 +54,20 @@ label:focus-within {
   padding: 28px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(180deg, rgba(20, 23, 30, 0.96) 0%, rgba(15, 17, 23, 0.96) 100%);
+  background: #171b24;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
 }
 
 .loginEyebrow {
   display: inline-flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 7px 11px;
   border-radius: 999px;
-  background: rgba(238, 77, 45, 0.12);
+  background: rgba(238, 77, 45, 0.14);
   color: #ff835f;
   font-size: 11px;
-  letter-spacing: 0.08em;
   font-weight: 800;
+  letter-spacing: 0.08em;
   margin-bottom: 16px;
 }
 
@@ -87,9 +81,9 @@ label:focus-within {
 
 .loginCard p {
   margin: 14px 0 0;
-  color: #a7b0bf;
+  color: #9eadc5;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .loginLabel {
@@ -98,31 +92,31 @@ label:focus-within {
   margin-bottom: 8px;
   color: #eef2f7;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .loginCard input {
   width: 362px;
   max-width: 100%;
-  height: 50px;
+  height: 48px;
+  padding: 0 14px;
   border-radius: 14px;
   border: 1px solid rgb(238, 77, 45);
   background: rgb(9, 11, 16);
   color: #fff;
-  padding: 14px 15px;
 }
 
 .loginCard input::placeholder,
 .workspaceNameInput::placeholder,
 .shopeeAccountRow input::placeholder {
-  color: #687183;
+  color: #667081;
 }
 
 .loginCard input:focus,
 .workspaceNameInput:focus,
-.shopeeAccountRow input:focus,
-.dashboardControls input:focus {
-  border-color: #ff7f63;
+.shopeeAccountRow input:focus {
+  outline: none;
+  border-color: #ff8a69;
   box-shadow: 0 0 0 2px rgba(238, 77, 45, 0.12);
 }
 
@@ -130,43 +124,33 @@ label:focus-within {
   width: 362px;
   max-width: 100%;
   margin-top: 14px;
-  height: 50px;
+  height: 48px;
   border-radius: 14px;
-  background: rgb(238, 77, 45);
+  background: rgb(248, 74, 37);
   color: #fff;
   font-size: 15px;
   font-weight: 800;
 }
 
-.loginButton:hover {
-  background: #f45a35;
-}
-
 .loginFooterNote {
-  margin-top: 10px;
-  text-align: center;
-  color: #7f8797;
+  margin-top: 12px;
+  color: #778296;
   font-size: 12px;
+  text-align: center;
 }
 
 .errorText {
-  margin: 12px 0 0;
+  margin-top: 12px;
   color: #ff9987;
   font-size: 13px;
 }
 
-.errorText.centered {
-  text-align: left;
-}
-
-.uploadPage,
-.dashboardPage {
+.uploadPage {
   min-height: 100vh;
-  padding: 28px 18px 42px;
+  padding: 26px 18px 42px;
 }
 
-.uploadShell,
-.dashboardShell {
+.uploadShell {
   width: 640px;
   max-width: 100%;
   margin: 0 auto;
@@ -174,8 +158,8 @@ label:focus-within {
 
 .heroHeader {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -193,8 +177,7 @@ label:focus-within {
   display: grid;
   place-items: center;
   background: rgb(238, 77, 45);
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(238, 77, 45, 0.18);
+  color: white;
 }
 
 .heroBrand h1 {
@@ -207,39 +190,42 @@ label:focus-within {
 
 .heroBrand p {
   margin: 0;
-  color: #98a1b2;
+  color: #9aa3b3;
   font-size: 12px;
 }
 
 .guideButton,
 .outlineButton,
 .guideNav,
-.menuTab,
-.chip {
+.guideTab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 34px;
-  padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid rgba(238, 77, 45, 0.42);
-  background: transparent;
-  color: #ff7657;
+  height: 32px;
+  padding: 0 14px;
   font-size: 12px;
   font-weight: 700;
 }
 
 .guideButton {
-  border-color: #474e59;
-  color: #e9edf4;
+  border: 1px solid #4a4f58;
+  background: transparent;
+  color: #f1f3f6;
+}
+
+.outlineButton,
+.guideNav {
+  border: 1px solid rgba(238, 77, 45, 0.45);
+  background: transparent;
+  color: #ff7657;
 }
 
 .guideButton:hover,
 .outlineButton:hover,
 .guideNav:hover:not(:disabled),
-.menuTab:hover,
-.chip:hover {
+.guideTab:hover {
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -255,21 +241,16 @@ label:focus-within {
 
 .workspaceSubheading {
   margin: 0 0 14px;
-  color: #6f7685;
+  color: #666d79;
   font-size: 12px;
 }
 
 .workspacePanel,
 .notesPanel,
-.historyPanel,
-.filterPanel,
-.chartPanel,
-.panelTable,
-.kpiCard {
-  background: #191b21;
-  border: 1px solid #2d323c;
+.historyPanel {
   border-radius: 14px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+  border: 1px solid #31353d;
+  background: #191a1d;
 }
 
 .workspacePanel {
@@ -278,41 +259,36 @@ label:focus-within {
 
 .workspaceBar {
   display: grid;
-  grid-template-columns: 26px 1fr auto;
+  grid-template-columns: 24px 1fr auto;
   align-items: center;
   gap: 12px;
   min-height: 46px;
   padding: 0 14px;
-  border-bottom: 1px solid #2b3038;
+  border-bottom: 1px solid #2d3138;
 }
 
 .workspaceIndex,
-.guideMainIndex,
-.guidePointIndex {
+.guideHeaderIndex,
+.guideNumber {
   width: 22px;
   height: 22px;
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: rgba(238, 77, 45, 0.11);
-  border: 1px solid rgba(238, 77, 45, 0.62);
-  color: #ff835f;
+  background: rgba(238, 77, 45, 0.1);
+  border: 1px solid rgba(238, 77, 45, 0.55);
+  color: #ff7b5d;
   font-size: 12px;
   font-weight: 800;
 }
 
-.workspaceIndex.small {
-  border-radius: 999px;
-}
-
 .workspaceNameInput,
-.shopeeAccountRow input,
-.dashboardControls input {
-  border: 1px solid #3a404b;
-  background: #15171d;
-  color: #f5f7fb;
+.shopeeAccountRow input {
+  height: 34px;
+  border: 1px solid #3a4048;
   border-radius: 10px;
-  height: 36px;
+  background: #15181d;
+  color: #f0f0f0;
   padding: 0 12px;
 }
 
@@ -320,16 +296,12 @@ label:focus-within {
   border: 0;
   background: transparent;
   padding: 0;
-  box-shadow: none !important;
   height: auto;
 }
 
 .workspaceStatus {
-  color: #707988;
+  color: #757b87;
   font-size: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .workspaceBody {
@@ -338,11 +310,11 @@ label:focus-within {
 
 .sectionCaption {
   margin-bottom: 10px;
-  color: #666c78;
+  color: #676d77;
   font-size: 11px;
   font-weight: 800;
-  text-transform: uppercase;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .sectionCaption.topGap {
@@ -357,8 +329,8 @@ label:focus-within {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #353a43;
-  background: #23252a;
+  border: 1px solid #383c43;
+  background: #242426;
 }
 
 .uploadCard {
@@ -369,27 +341,21 @@ label:focus-within {
   grid-template-columns: 24px 1fr auto auto;
 }
 
-.uploadCard:hover,
-.shopeeAccountRow:hover,
-.historyRow:hover {
-  border-color: #474d58;
-}
-
 .uploadIconWrap {
   width: 28px;
   height: 28px;
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: rgba(238, 77, 45, 0.08);
   border: 1px solid rgba(238, 77, 45, 0.22);
+  background: rgba(238, 77, 45, 0.08);
   color: #ff7657;
 }
 
 .uploadContent {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .uploadContent strong {
@@ -401,21 +367,15 @@ label:focus-within {
 .fileState,
 .historyMetaLine,
 .historyEmpty,
-.uploadFooter,
-.infoBanner {
-  color: #8f97a6;
-}
-
-.uploadContent span,
-.fileState,
-.historyMetaLine {
+.uploadFooter {
+  color: #8d96a5;
   font-size: 12px;
 }
 
 .sectionDivider {
   height: 1px;
   margin: 12px 0;
-  background: #2b3038;
+  background: #2c3037;
 }
 
 .shopeeAccounts,
@@ -432,10 +392,10 @@ label:focus-within {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  border: 1px dashed #3c4047;
   border-radius: 8px;
-  border: 1px dashed #3b4048;
   background: transparent;
-  color: #5e6674;
+  color: #656c79;
   font-size: 12px;
   font-weight: 700;
 }
@@ -452,9 +412,9 @@ label:focus-within {
 
 .notesPanel p {
   margin: 0;
-  color: #c6ccd8;
+  color: #c7ced8;
   font-size: 12px;
-  line-height: 1.7;
+  line-height: 1.72;
 }
 
 .notesPanel p + p {
@@ -463,15 +423,11 @@ label:focus-within {
 
 .notesPanel strong,
 .historyDateLine,
-.warningBanner,
-.filterPanel strong,
-.chartPanel h3,
-.panelTable h3,
-.guideMainTitle,
-.guidePointTitle,
-.guideModalHeader h2,
-.historyPanelHeader h3 {
-  color: #f5f7fb;
+.historyPanelHeader h3,
+.guideHeaderTitle,
+.guideTitle,
+.guideModalHeader h2 {
+  color: #f0f0f0;
 }
 
 .historyPanelHeader {
@@ -489,7 +445,7 @@ label:focus-within {
 
 .historyPanelHeader p {
   margin: 8px 0 0;
-  color: #98a0af;
+  color: #9aa2af;
   font-size: 13px;
   line-height: 1.55;
 }
@@ -503,14 +459,14 @@ label:focus-within {
   margin-top: 14px;
   height: 38px;
   border-radius: 10px;
-  background: #582519;
-  color: #896f69;
+  background: #572618;
+  color: #886f68;
   font-size: 13px;
   font-weight: 800;
 }
 
 .analyzeButton.ready {
-  background: #ee4d2d;
+  background: rgb(238, 77, 45);
   color: #fff;
 }
 
@@ -521,7 +477,6 @@ label:focus-within {
 .uploadFooter {
   margin-top: 14px;
   text-align: center;
-  font-size: 12px;
 }
 
 .guideOverlay {
@@ -537,21 +492,17 @@ label:focus-within {
 
 .guideModal {
   width: min(100%, 860px);
-  border: 1px solid #2f3541;
   border-radius: 18px;
+  border: 1px solid #2f3540;
   background: #171a20;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
-}
-
-.guideModalHeader,
-.guideFooter {
-  padding: 18px 20px;
 }
 
 .guideModalHeader {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  padding: 18px 20px 14px;
 }
 
 .guideModalHeader h2 {
@@ -562,7 +513,7 @@ label:focus-within {
 
 .guideModalHeader p {
   margin: 6px 0 0;
-  color: #98a0af;
+  color: #97a0ae;
   font-size: 14px;
 }
 
@@ -583,13 +534,8 @@ label:focus-within {
 }
 
 .guideTab {
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
   background: #1f232b;
   color: #b5bdcb;
-  font-size: 13px;
-  font-weight: 700;
 }
 
 .guideTab.active {
@@ -599,38 +545,38 @@ label:focus-within {
 
 .guideContent {
   padding: 18px 20px;
-  border-top: 1px solid #2a3039;
-  border-bottom: 1px solid #2a3039;
+  border-top: 1px solid #2c3139;
+  border-bottom: 1px solid #2c3139;
 }
 
-.guideMainTitleRow {
+.guideHeaderRow {
   display: grid;
-  grid-template-columns: 26px 1fr;
-  gap: 10px;
+  grid-template-columns: 22px 1fr;
   align-items: center;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
-.guideMainTitle {
+.guideHeaderTitle {
   font-size: 20px;
   font-weight: 800;
 }
 
 .guideBodyGrid {
   display: grid;
-  grid-template-columns: 26px 1fr;
+  grid-template-columns: 22px 1fr;
   gap: 10px 14px;
 }
 
-.guidePointTitle {
+.guideTitle {
   align-self: center;
   font-size: 16px;
   font-weight: 700;
 }
 
-.guidePointText {
+.guideText {
   grid-column: 2;
-  color: #ced4de;
+  color: #cfd5df;
   font-size: 14px;
   line-height: 1.65;
 }
@@ -652,12 +598,11 @@ label:focus-within {
 .guideFooter {
   display: flex;
   justify-content: space-between;
+  padding: 16px 20px 20px;
 }
 
 .guideNav {
   min-width: 140px;
-  color: #e4e9f1;
-  border-color: #404854;
 }
 
 .guideNav.primary {
@@ -671,226 +616,21 @@ label:focus-within {
   cursor: not-allowed;
 }
 
-.dashboardTopbar {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  padding-bottom: 12px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid #272c34;
-  color: #9ea7b8;
-  font-size: 12px;
-}
-
-.dashboardControls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.dashboardControls label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dashboardControls input {
-  width: 72px;
-  height: 34px;
-}
-
-.filterPanel {
-  padding: 14px 16px;
-  margin-bottom: 12px;
-}
-
-.chipRow,
-.dashboardMenuTabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.chip {
-  border-radius: 999px;
-  background: #173644;
-  border-color: #24586f;
-  color: #6fdbff;
-}
-
-.chip.active,
-.menuTab.active {
-  background: rgba(238, 77, 45, 0.12);
-  border-color: rgba(238, 77, 45, 0.6);
-  color: #ff835f;
-}
-
-.menuTab {
-  border-color: #3e4450;
-  color: #d7dde6;
-}
-
-.warningBanner,
-.infoBanner {
-  margin-bottom: 12px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-}
-
-.warningBanner {
-  background: rgba(255, 194, 102, 0.08);
-  border: 1px solid rgba(255, 194, 102, 0.24);
-  color: #ffc56e;
-}
-
-.infoBanner {
-  background: #191b21;
-  border: 1px solid #2d323c;
-}
-
-.kpiGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.kpiCard {
-  padding: 14px;
-}
-
-.kpiLabel {
-  color: #7e8796;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-
-.kpiValue {
-  margin-top: 8px;
-  font-size: 21px;
-  font-weight: 800;
-}
-
-.kpiSub {
-  margin-top: 8px;
-  color: #8f97a6;
-  font-size: 12px;
-}
-
-.kpiCard.positive .kpiValue {
-  color: #6ee39f;
-}
-
-.kpiCard.negative .kpiValue {
-  color: #ff9a84;
-}
-
-.chartGrid,
-.panelTable {
-  margin-top: 14px;
-}
-
-.chartGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.chartPanel,
-.panelTable {
-  padding: 14px;
-}
-
-.chartPanel h3,
-.panelTable h3 {
-  margin: 0 0 12px;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-}
-
-.tableWrap {
-  overflow: auto;
-}
-
-.tableWrap table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.tableWrap th,
-.tableWrap td {
-  padding: 10px;
-  border-bottom: 1px solid #2a2e36;
-  text-align: left;
-}
-
-.tableWrap th {
-  color: #8b93a2;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.tableWrap td {
-  color: #d8dee8;
-}
-
-@media (max-width: 900px) {
-  .kpiGrid,
-  .chartGrid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 @media (max-width: 760px) {
   .heroHeader,
   .historyPanelHeader,
-  .dashboardTopbar {
+  .historyRow,
+  .uploadCard,
+  .shopeeAccountRow,
+  .guideFooter {
+    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
   }
 
-  .uploadCard,
-  .shopeeAccountRow,
-  .kpiGrid,
-  .chartGrid,
-  .historyRow {
-    grid-template-columns: 1fr;
-  }
-
-  .guideFooter {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .guideNav,
   .guideButton,
   .outlineButton,
-  .menuTab {
+  .guideNav {
     width: 100%;
-  }
-}
-
-@media (max-width: 520px) {
-  .loginPage,
-  .uploadPage,
-  .dashboardPage {
-    padding: 18px 12px 28px;
-  }
-
-  .loginCard {
-    padding: 22px 20px;
-  }
-
-  .guideTabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
   }
 }
