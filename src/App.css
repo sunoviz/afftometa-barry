@@ -3,7 +3,9 @@
 :root {
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #f5f7fb;
-  background: #0b0b0c;
+  background: #0d0d0f;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -18,7 +20,7 @@ body,
 
 body {
   margin: 0;
-  background: #0b0b0c;
+  background: #0d0d0f;
   color: #f5f7fb;
 }
 
@@ -32,75 +34,124 @@ button {
   cursor: pointer;
 }
 
+input,
+button {
+  transition: all 0.18s ease;
+}
+
+input:focus,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 98, 67, 0.15);
+}
+
 .loginPage {
   min-height: 100vh;
+  background: #0d0d0f;
+  padding: 48px 18px;
+}
+
+.loginOuter {
+  min-height: calc(100vh - 96px);
   display: grid;
-  place-items: start center;
-  padding: 92px 20px 40px;
+  place-items: center;
 }
 
 .loginCard {
-  width: min(100%, 560px);
+  width: min(100%, 420px);
+  background: #181b22;
+  border: 1px solid #2c3240;
+  border-radius: 20px;
+  padding: 28px 28px 26px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.32);
 }
 
 .loginEyebrow {
-  color: #8e919b;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 98, 67, 0.14);
+  color: #ff7f63;
   font-size: 11px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.06em;
   font-weight: 800;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .loginCard h1 {
   margin: 0;
-  font-size: 40px;
-  line-height: 1.05;
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .loginCard p {
-  margin: 18px 0 0;
-  max-width: 520px;
-  color: #b5b9c2;
-  font-size: 15px;
-  line-height: 1.6;
+  margin: 14px 0 0;
+  color: #9aa3b5;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.loginLabel {
+  display: block;
+  margin-top: 22px;
+  margin-bottom: 8px;
+  color: #eef1f6;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .loginCard input {
   width: 100%;
-  margin-top: 26px;
-  height: 50px;
-  border-radius: 12px;
-  border: 1px solid #2c2d31;
-  background: #131316;
-  color: #f3f4f6;
-  padding: 0 16px;
-  outline: none;
+  height: 46px;
+  border-radius: 11px;
+  border: 1px solid #3a404f;
+  background: #0d1016;
+  color: #f5f7fb;
+  padding: 0 14px;
 }
 
 .loginCard input::placeholder,
 .workspaceNameInput::placeholder,
 .shopeeAccountRow input::placeholder {
-  color: #6f737b;
+  color: #677081;
+}
+
+.loginCard input:focus,
+.workspaceNameInput:focus,
+.shopeeAccountRow input:focus,
+.dashboardTopbar input:focus {
+  border-color: #ff6243;
 }
 
 .loginButton {
   margin-top: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
   height: 46px;
-  padding: 0 18px;
-  border-radius: 10px;
-  background: #ff5a3d;
+  border-radius: 11px;
+  background: #ff5a36;
   color: #fff;
+  font-size: 15px;
   font-weight: 800;
 }
 
+.loginButton:hover {
+  background: #ff6645;
+}
+
+.loginFooterNote {
+  margin-top: 14px;
+  text-align: center;
+  color: #7e8798;
+  font-size: 13px;
+}
+
 .errorText {
-  margin: 14px 0 0;
-  color: #ff9987;
+  margin: 12px 0 0;
+  color: #ff9a84;
   font-size: 13px;
 }
 
@@ -112,18 +163,19 @@ button {
 .dashboardPage {
   min-height: 100vh;
   padding: 28px 18px 42px;
+  background: #0d0d0f;
 }
 
 .uploadShell,
 .dashboardShell {
-  width: min(100%, 980px);
+  width: min(100%, 640px);
   margin: 0 auto;
 }
 
 .heroHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -138,66 +190,55 @@ button {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: #ff5a3d;
+  background: #ff5a36;
   display: grid;
   place-items: center;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(255, 90, 54, 0.22);
 }
 
 .heroBrand h1 {
-  margin: 0 0 4px;
-  font-size: 21px;
+  margin: 0 0 3px;
+  font-size: 19px;
   line-height: 1;
-  font-weight: 900;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .heroBrand p {
   margin: 0;
-  color: #8e919b;
+  color: #99a2b3;
   font-size: 12px;
 }
 
-.guideButton,
-.ghostButton,
-.guideNav,
-.chip,
-.analyzeButton,
-.loginButton {
-  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
-}
-
-.guideButton,
-.ghostButton {
+.topRightButton {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border-radius: 10px;
-  border: 1px solid #2e2f34;
-  background: #131316;
-  color: #d1d4db;
-  padding: 10px 14px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 0;
+  background: transparent;
+  border: 1px solid #494f5b;
+  color: #e5e7eb;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.guideButton:hover,
-.ghostButton:hover,
-.chip:hover,
-.guideNav:hover:not(:disabled),
-.analyzeButton.ready:hover,
-.loginButton:hover {
-  opacity: 0.95;
+.topRightButton:hover {
+  border-color: #636a78;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .workspaceHeading {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   margin-bottom: 4px;
 }
 
 .workspaceSubheading {
   margin: 0 0 14px;
-  color: #70747d;
+  color: #6f7685;
   font-size: 12px;
 }
 
@@ -208,9 +249,10 @@ button {
 .chartPanel,
 .summaryCard,
 .kpiCard {
-  background: #17181b;
-  border: 1px solid #2b2d31;
+  background: #1b1b1e;
+  border: 1px solid #2f333a;
   border-radius: 14px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14);
 }
 
 .workspacePanel {
@@ -219,162 +261,213 @@ button {
 
 .workspaceBar {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 26px 1fr auto;
   align-items: center;
   gap: 12px;
-  min-height: 54px;
-  padding: 0 16px;
-  border-bottom: 1px solid #2b2d31;
+  min-height: 46px;
+  padding: 0 14px;
+  border-bottom: 1px solid #2d3036;
 }
 
 .workspaceIndex {
   width: 22px;
   height: 22px;
-  border-radius: 7px;
+  border-radius: 999px;
   display: grid;
   place-items: center;
-  background: #3f1c17;
-  border: 1px solid #ff5a3d;
-  color: #ff7d66;
+  background: rgba(255, 98, 67, 0.08);
+  border: 1px solid rgba(255, 98, 67, 0.65);
+  color: #ff7f63;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .workspaceIndex.small {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .workspaceNameInput,
 .shopeeAccountRow input,
 .dashboardTopbar input {
-  border: 1px solid #303238;
-  background: #111214;
-  color: #f3f4f6;
+  border: 1px solid #383d46;
+  background: #17181c;
+  color: #f5f7fb;
   border-radius: 10px;
-  height: 40px;
+  height: 36px;
   padding: 0 12px;
-  outline: none;
 }
 
 .workspaceNameInput {
   border: 0;
   background: transparent;
+  border-radius: 0;
   height: auto;
   padding: 0;
+  box-shadow: none !important;
 }
 
 .workspaceStatus {
-  color: #7a7e87;
+  color: #707786;
   font-size: 12px;
   display: inline-flex;
-  gap: 4px;
   align-items: center;
+  gap: 4px;
 }
 
 .workspaceBody {
-  padding: 16px;
+  padding: 14px;
 }
 
 .sectionCaption {
   font-size: 11px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #6f737c;
-  font-weight: 900;
+  color: #666c78;
+  font-weight: 800;
   margin-bottom: 10px;
 }
 
 .sectionCaption.topGap {
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .uploadCard {
   display: grid;
-  grid-template-columns: 30px 1fr auto;
-  gap: 12px;
+  grid-template-columns: 28px 1fr auto;
   align-items: center;
-  background: #222327;
-  border: 1px solid #34363b;
-  border-radius: 12px;
-  padding: 13px 14px;
+  gap: 10px;
+  background: #232325;
+  border: 1px solid #35383e;
+  border-radius: 8px;
+  padding: 10px 12px;
 }
 
-.uploadCard.slim {
-  margin-bottom: 0;
+.uploadCard:hover,
+.shopeeAccountRow:hover,
+.historyRow:hover {
+  border-color: #434850;
 }
 
 .uploadIconWrap {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: #191a1d;
-  color: #9ca3af;
+  background: rgba(255, 98, 67, 0.07);
+  border: 1px solid rgba(255, 98, 67, 0.25);
+  color: #ff6f54;
 }
 
 .uploadContent {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .uploadContent strong {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .uploadContent span {
-  color: #9aa0ab;
+  color: #7e8593;
   font-size: 12px;
 }
 
-.ghostButton input {
+.outlineButton,
+.guideNav,
+.chip,
+.topbarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 98, 67, 0.45);
+  background: transparent;
+  color: #ff6f54;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.outlineButton:hover,
+.guideNav:hover:not(:disabled),
+.chip:hover,
+.topbarButton:hover {
+  background: rgba(255, 98, 67, 0.06);
+}
+
+.outlineButton input {
   display: none;
 }
 
-.ghostButton.compact {
-  padding: 10px 12px;
-}
-
-.addButton,
-.workspaceAddButton {
-  margin-top: 12px;
-}
-
-.workspaceAddButton {
-  background: #17181b;
+.outlineButton.compact,
+.topbarButton {
+  padding: 0 12px;
 }
 
 .sectionDivider {
   height: 1px;
-  background: #2b2d31;
-  margin: 14px 0;
+  background: #2d3036;
+  margin: 12px 0;
 }
 
 .shopeeAccounts {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .shopeeAccountRow {
   display: grid;
-  grid-template-columns: 22px 1fr auto auto;
+  grid-template-columns: 24px 1fr auto auto;
   gap: 10px;
   align-items: center;
+  border-radius: 8px;
+  border: 1px solid #35383e;
+  padding: 10px 12px;
+  background: #232325;
 }
 
 .fileState {
-  color: #b1b6c0;
-  font-size: 13px;
+  color: #7e8593;
+  font-size: 12px;
+}
+
+.dashedButton {
+  margin-top: 8px;
+  width: 100%;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  border: 1px dashed #3a3e46;
+  background: transparent;
+  color: #5e646f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashedButton:hover {
+  border-color: #515660;
+  color: #8f96a4;
+}
+
+.workspaceAddButton {
+  margin-top: 12px;
 }
 
 .notesPanel {
   margin-top: 14px;
-  padding: 15px 16px;
-  color: #d4d7de;
-  font-size: 13px;
-  line-height: 1.55;
+  padding: 16px;
+  color: #b6becd;
+  font-size: 12px;
+  line-height: 1.7;
 }
 
 .notesPanel p {
@@ -382,11 +475,15 @@ button {
 }
 
 .notesPanel p + p {
-  margin-top: 8px;
+  margin-top: 4px;
+}
+
+.notesPanel strong {
+  color: #f2f5fa;
 }
 
 .historyPanel {
-  margin-top: 14px;
+  margin-top: 18px;
   padding: 16px;
 }
 
@@ -400,18 +497,18 @@ button {
 .historyPanelHeader h3 {
   margin: 0;
   font-size: 16px;
+  font-weight: 800;
 }
 
 .historyPanelHeader p {
   margin: 8px 0 0;
-  color: #9aa0ab;
+  color: #98a0af;
   font-size: 13px;
-  line-height: 1.55;
-  max-width: 620px;
+  line-height: 1.5;
 }
 
 .refreshButton {
-  white-space: nowrap;
+  min-width: 78px;
 }
 
 .historyItems {
@@ -425,54 +522,50 @@ button {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
-  border-top: 1px solid #25272c;
-}
-
-.historyRow:first-child {
-  border-top: 0;
-  padding-top: 0;
+  background: #232325;
+  border: 1px solid #35383e;
+  border-radius: 8px;
+  padding: 12px 12px;
 }
 
 .historyDateLine {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   font-size: 13px;
+  color: #f1f4f9;
 }
 
-.historyDateLine span,
 .historyMetaLine,
 .historyEmpty,
-.uploadFooter,
-.infoBanner,
-.warningBanner {
-  color: #9aa0ab;
+.uploadFooter {
+  color: #8c94a3;
 }
 
 .historyMetaLine {
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 12px;
 }
 
-.openButton {
-  min-width: 70px;
-  justify-content: center;
+.historyOpenButton {
+  min-width: 54px;
 }
 
 .analyzeButton {
-  margin-top: 18px;
+  margin-top: 14px;
   width: 100%;
-  height: 48px;
-  border-radius: 12px;
-  background: #231311;
-  color: #6d6664;
+  height: 38px;
+  border-radius: 10px;
+  background: #5c2619;
+  color: #8b6d66;
+  font-size: 13px;
   font-weight: 800;
 }
 
 .analyzeButton.ready {
-  background: #ff5a3d;
+  background: #a23b26;
   color: #fff;
+}
+
+.analyzeButton.ready:hover {
+  background: #b0412a;
 }
 
 .analyzeButton:disabled {
@@ -480,7 +573,7 @@ button {
 }
 
 .uploadFooter {
-  margin-top: 16px;
+  margin-top: 14px;
   text-align: center;
   font-size: 12px;
 }
@@ -488,7 +581,8 @@ button {
 .guideOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(8, 8, 10, 0.7);
+  background: rgba(10, 12, 16, 0.74);
+  backdrop-filter: blur(2px);
   display: grid;
   place-items: center;
   padding: 20px;
@@ -496,12 +590,11 @@ button {
 }
 
 .guideModal {
-  width: min(100%, 860px);
-  background: #131417;
-  border: 1px solid #2c2e34;
+  width: min(100%, 820px);
+  background: #171a20;
+  border: 1px solid #2d333f;
   border-radius: 18px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
 }
 
 .guideModalHeader {
@@ -514,21 +607,22 @@ button {
 .guideModalHeader h2 {
   margin: 0;
   font-size: 22px;
+  font-weight: 800;
 }
 
 .guideModalHeader p {
   margin: 6px 0 0;
-  color: #969ca7;
+  color: #98a0af;
   font-size: 14px;
 }
 
 .closeButton {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
-  background: #1b1d21;
-  color: #c9ced7;
-  font-size: 20px;
+  background: #1f232b;
+  color: #dce1ea;
+  font-size: 18px;
 }
 
 .guideTabs {
@@ -539,76 +633,98 @@ button {
 }
 
 .guideTab {
-  border-radius: 999px;
-  padding: 8px 14px;
-  background: #1b1d21;
-  color: #aeb4bf;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #1e232b;
+  color: #b4bcc9;
   font-size: 13px;
   font-weight: 700;
 }
 
 .guideTab.active {
-  background: #ff5a3d;
+  background: #ff5a36;
   color: #fff;
 }
 
 .guideContent {
-  border-top: 1px solid #26282d;
-  border-bottom: 1px solid #26282d;
+  border-top: 1px solid #2a3038;
+  border-bottom: 1px solid #2a3038;
   padding: 18px 20px;
 }
 
-.guideGrid {
+.guideHeroRow {
   display: grid;
-  grid-template-columns: 30px 1fr;
-  gap: 8px 14px;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .guideNumber {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: #3f1c17;
-  border: 1px solid #ff5a3d;
-  color: #ff7d66;
-  font-size: 12px;
-  font-weight: 900;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
   display: grid;
   place-items: center;
+  border: 1px solid rgba(255, 98, 67, 0.7);
+  background: rgba(255, 98, 67, 0.12);
+  color: #ff7f63;
+  font-size: 12px;
+  font-weight: 800;
 }
 
-.guideTitle {
-  align-self: center;
+.guideHeroTitle {
   font-size: 20px;
   font-weight: 800;
 }
 
-.guideTextBlock {
-  grid-column: 1 / -1;
+.guideItems {
   display: grid;
-  grid-template-columns: 30px 1fr;
-  gap: 14px;
+  grid-template-columns: 28px 1fr;
+  gap: 10px 14px;
+}
+
+.guideNumberSmall {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 98, 67, 0.32);
+  background: rgba(255, 98, 67, 0.07);
+  color: #ff7f63;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guideTextTitle {
+  align-self: center;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .guideText {
-  color: #d5d9e2;
+  grid-column: 2 / 3;
+  color: #cfd5df;
   font-size: 14px;
   line-height: 1.65;
-  padding-bottom: 2px;
 }
 
 .guideExample,
 .guideCodeLine {
   margin-top: 10px;
-  color: #b8bdc8;
+  color: #aeb6c5;
 }
 
 .guideCodeLine code {
-  background: #1a1c20;
-  border: 1px solid #2f3238;
+  display: inline-block;
+  margin-top: 4px;
+  background: #20242d;
+  border: 1px solid #313744;
   border-radius: 8px;
   padding: 2px 6px;
-  color: #f0f2f6;
+  color: #f5f7fb;
 }
 
 .guideFooter {
@@ -619,49 +735,48 @@ button {
 
 .guideNav {
   min-width: 140px;
-  border-radius: 10px;
-  padding: 12px 16px;
-  background: #1a1c20;
-  color: #d0d4dc;
-  font-weight: 700;
+  color: #dce1ea;
+  border-color: #39414d;
 }
 
 .guideNav.primary {
-  background: #ff5a3d;
+  border-color: transparent;
+  background: #ff5a36;
   color: #fff;
 }
 
 .guideNav:disabled {
-  opacity: 0.42;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .dashboardTopbar {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
-  border-bottom: 1px solid #24262b;
+  border-bottom: 1px solid #272c34;
   padding-bottom: 12px;
   margin-bottom: 14px;
-  color: #a4aab4;
-  font-size: 13px;
+  color: #9aa3b5;
+  font-size: 12px;
 }
 
 .dashboardTopbar label {
   display: inline-flex;
-  gap: 8px;
   align-items: center;
+  gap: 6px;
   margin-left: auto;
 }
 
 .dashboardTopbar input {
-  width: 80px;
+  width: 74px;
   height: 34px;
 }
 
-.danger {
-  color: #ff9c8c;
+.topbarButton.danger {
+  color: #ff9a84;
+  border-color: rgba(255, 154, 132, 0.32);
 }
 
 .filterPanel {
@@ -670,8 +785,8 @@ button {
 }
 
 .filterPanel strong {
+  color: #afb7c4;
   font-size: 12px;
-  color: #b8bec8;
 }
 
 .chipRow {
@@ -682,19 +797,18 @@ button {
 }
 
 .chip {
+  height: 28px;
+  padding: 0 12px;
   border-radius: 999px;
-  padding: 6px 12px;
-  background: #163443;
-  border: 1px solid #25546a;
-  color: #6cd5ff;
-  font-size: 11px;
-  font-weight: 700;
+  background: #193546;
+  border-color: #234f67;
+  color: #74d8ff;
 }
 
 .chip.active {
-  background: #4a211a;
-  border-color: #8b3024;
-  color: #ff7a60;
+  background: rgba(255, 98, 67, 0.11);
+  border-color: rgba(255, 98, 67, 0.6);
+  color: #ff7f63;
 }
 
 .warningBanner,
@@ -706,14 +820,15 @@ button {
 }
 
 .warningBanner {
-  background: #2b1a0f;
-  border: 1px solid #6a3817;
+  background: rgba(255, 194, 102, 0.08);
+  border: 1px solid rgba(255, 194, 102, 0.24);
   color: #ffc56e;
 }
 
 .infoBanner {
-  background: #17181b;
-  border: 1px solid #24262b;
+  background: #1b1b1e;
+  border: 1px solid #2f333a;
+  color: #98a0af;
 }
 
 .kpiGrid {
@@ -727,30 +842,30 @@ button {
 }
 
 .kpiLabel {
-  color: #8f95a0;
-  font-size: 12px;
+  color: #7f8795;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .kpiValue {
   margin-top: 8px;
-  font-size: 24px;
-  font-weight: 900;
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .kpiSub {
   margin-top: 8px;
-  color: #9298a3;
+  color: #8d95a4;
   font-size: 12px;
 }
 
 .kpiCard.positive .kpiValue {
-  color: #6ee7a0;
+  color: #68e39b;
 }
 
 .kpiCard.negative .kpiValue {
-  color: #ff8f7e;
+  color: #ff8f7a;
 }
 
 .chartGrid {
@@ -767,8 +882,9 @@ button {
 .chartPanel h3,
 .summaryCard h3 {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.08em;
+  color: #e5eaf1;
 }
 
 .summaryGrid {
@@ -785,7 +901,7 @@ button {
 .summaryCard ul {
   margin: 0;
   padding-left: 18px;
-  color: #cfd4dd;
+  color: #d0d6df;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -795,10 +911,6 @@ button {
 }
 
 @media (max-width: 860px) {
-  .loginPage {
-    padding-top: 60px;
-  }
-
   .heroHeader,
   .historyPanelHeader,
   .dashboardTopbar {
@@ -819,14 +931,6 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .workspaceBar {
-    gap: 8px;
-  }
-
-  .workspaceStatus {
-    justify-content: flex-start;
-  }
-
   .guideFooter {
     flex-direction: column;
     gap: 10px;
@@ -838,13 +942,14 @@ button {
 }
 
 @media (max-width: 560px) {
+  .loginPage,
   .uploadPage,
   .dashboardPage {
-    padding: 20px 12px 34px;
+    padding: 18px 12px 28px;
   }
 
-  .loginCard h1 {
-    font-size: 34px;
+  .loginCard {
+    padding: 24px 20px;
   }
 
   .guideTabs {
