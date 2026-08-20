@@ -441,22 +441,6 @@ label {
   gap: 12px;
 }
 
-.historyPanelActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ghostFilter {
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: transparent;
-  color: #8f98a5;
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .historyPanelHeader h3 {
   margin: 0;
   font-size: 16px;
