@@ -51,7 +51,7 @@ label {
 .loginCard {
   width: 420px;
   max-width: 100%;
-  padding: 28px;
+  padding: 27px 28px 28px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: #171b24;
@@ -73,17 +73,18 @@ label {
 
 .loginCard h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: 29px;
   line-height: 1.08;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
 .loginCard p {
-  margin: 14px 0 0;
-  color: #9eadc5;
-  font-size: 14px;
+  margin: 13px 0 0;
+  color: #99a8c0;
+  font-size: 13.5px;
   line-height: 1.55;
+  max-width: 330px;
 }
 
 .loginLabel {
@@ -101,7 +102,7 @@ label {
   height: 48px;
   padding: 0 14px;
   border-radius: 14px;
-  border: 1px solid rgb(238, 77, 45);
+  border: 1px solid rgb(255, 33, 0);
   background: rgb(9, 11, 16);
   color: #fff;
 }
@@ -147,7 +148,7 @@ label {
 
 .uploadPage {
   min-height: 100vh;
-  padding: 26px 18px 42px;
+  padding: 25px 18px 42px;
 }
 
 .uploadShell {
@@ -161,7 +162,7 @@ label {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 30px;
 }
 
 .heroBrand {
@@ -171,12 +172,12 @@ label {
 }
 
 .heroLogo {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: rgb(238, 77, 45);
+  background: rgb(248, 74, 37);
   color: white;
 }
 
@@ -190,8 +191,8 @@ label {
 
 .heroBrand p {
   margin: 0;
-  color: #9aa3b3;
-  font-size: 12px;
+  color: #96a0af;
+  font-size: 11.5px;
 }
 
 .guideButton,
@@ -203,21 +204,23 @@ label {
   justify-content: center;
   gap: 8px;
   border-radius: 10px;
-  height: 32px;
-  padding: 0 14px;
   font-size: 12px;
   font-weight: 700;
 }
 
 .guideButton {
-  border: 1px solid #4a4f58;
+  height: 31px;
+  padding: 0 13px;
+  border: 1px solid #585d66;
   background: transparent;
   color: #f1f3f6;
 }
 
 .outlineButton,
 .guideNav {
-  border: 1px solid rgba(238, 77, 45, 0.45);
+  height: 28px;
+  padding: 0 13px;
+  border: 1px solid rgba(238, 77, 45, 0.52);
   background: transparent;
   color: #ff7657;
 }
@@ -241,7 +244,7 @@ label {
 
 .workspaceSubheading {
   margin: 0 0 14px;
-  color: #666d79;
+  color: #676f7c;
   font-size: 12px;
 }
 
@@ -300,7 +303,7 @@ label {
 }
 
 .workspaceStatus {
-  color: #757b87;
+  color: #6f7680;
   font-size: 12px;
 }
 
@@ -310,7 +313,7 @@ label {
 
 .sectionCaption {
   margin-bottom: 10px;
-  color: #676d77;
+  color: #666b73;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -368,7 +371,7 @@ label {
 .historyMetaLine,
 .historyEmpty,
 .uploadFooter {
-  color: #8d96a5;
+  color: #8b94a2;
   font-size: 12px;
 }
 
@@ -395,13 +398,14 @@ label {
   border: 1px dashed #3c4047;
   border-radius: 8px;
   background: transparent;
-  color: #656c79;
+  color: #626976;
   font-size: 12px;
   font-weight: 700;
 }
 
 .workspaceActionStub {
   margin-top: 12px;
+  height: 36px;
 }
 
 .notesPanel,
@@ -412,7 +416,7 @@ label {
 
 .notesPanel p {
   margin: 0;
-  color: #c7ced8;
+  color: #c3cad4;
   font-size: 12px;
   line-height: 1.72;
 }
@@ -448,19 +452,27 @@ label {
   color: #9aa2af;
   font-size: 13px;
   line-height: 1.55;
+  max-width: 470px;
 }
 
 .historyRow {
   grid-template-columns: 1fr auto;
+  min-height: 56px;
+}
+
+.historyDateLine {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
 }
 
 .analyzeButton {
   width: 100%;
   margin-top: 14px;
-  height: 38px;
+  height: 40px;
   border-radius: 10px;
-  background: #572618;
-  color: #886f68;
+  background: #582619;
+  color: #876d66;
   font-size: 13px;
   font-weight: 800;
 }
@@ -475,8 +487,10 @@ label {
 }
 
 .uploadFooter {
-  margin-top: 14px;
+  margin-top: 20px;
   text-align: center;
+  padding-top: 16px;
+  border-top: 1px solid #24282f;
 }
 
 .guideOverlay {
@@ -534,6 +548,8 @@ label {
 }
 
 .guideTab {
+  height: 32px;
+  padding: 0 14px;
   background: #1f232b;
   color: #b5bdcb;
 }
@@ -619,13 +635,15 @@ label {
 @media (max-width: 760px) {
   .heroHeader,
   .historyPanelHeader,
-  .historyRow,
-  .uploadCard,
-  .shopeeAccountRow,
   .guideFooter {
-    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .historyRow,
+  .uploadCard,
+  .shopeeAccountRow {
+    grid-template-columns: 1fr;
   }
 
   .guideButton,
