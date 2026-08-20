@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import { ChevronDown, CircleHelp, Menu, Plus, Upload } from 'lucide-react'
 import { analyze, type Analysis } from './lib/parser'
-import { deleteRun, listRuns, saveRun, type SavedRun } from './lib/history'
+import { listRuns, saveRun, type SavedRun } from './lib/history'
 import './App.css'
 
 const fmt = new Intl.NumberFormat('id-ID')
@@ -36,9 +36,11 @@ type WorkspaceState = {
   clickFile: File | null
 }
 
-const APP_NAME = 'Affiliate Tracker'
+type DashboardTab = 'overview' | 'campaigns' | 'products' | 'daily' | 'tags'
+
+const APP_NAME = 'Satruk Affiliate Tracker'
 const APP_SUBTITLE = 'Shopee × Meta Ads History Tracker'
-const FOOTER_TEXT = '© 2026 Affiliate Tracker — private server build'
+const FOOTER_TEXT = '© 2026 Satruk Affiliate Tracker — private server build'
 
 const GUIDE_STEPS: Array<{ id: GuideStepId; label: string; title: string; body: React.ReactNode }> = [
   {
@@ -52,9 +54,9 @@ const GUIDE_STEPS: Array<{ id: GuideStepId; label: string; title: string; body: 
           title="Apa yang dibutuhkan"
           text={
             <>
-              Dashboard ini menggabungkan dua sumber data: <strong>Meta Ads CSV</strong> (data spend & klik
-              iklan) dan <strong>Shopee Affiliate CSV</strong> (data komisi). Hasil analisa bisa disimpan ke history
-              dan dibuka lagi kapan pun dari halaman utama.
+              Dashboard ini menggabungkan dua sumber data: <strong>Meta Ads CSV</strong> (data spend & klik iklan)
+              dan <strong>Shopee Affiliate CSV</strong> (data komisi). Di versi Satruk, hasil analisa bisa disimpan
+              ke server dan dibuka lagi lewat menu History.
             </>
           }
         />
@@ -125,8 +127,8 @@ const GUIDE_STEPS: Array<{ id: GuideStepId; label: string; title: string; body: 
               Klik <strong>Breakdown → By Time → Day</strong> supaya data per hari muncul. Pilih range tanggal yang
               diinginkan, lalu klik <strong>Export → Export Table Data (CSV)</strong>.
               <div className="guideExample">
-                <strong>Penting:</strong> Tanpa breakdown by Day, semua data akan jadi satu baris dan chart harian
-                tidak bisa ditampilkan.
+                <strong>Penting:</strong> Tanpa breakdown by Day, semua data akan jadi satu baris dan chart harian tidak
+                bisa ditampilkan.
               </div>
             </>
           }
@@ -266,9 +268,9 @@ const GUIDE_STEPS: Array<{ id: GuideStepId; label: string; title: string; body: 
 function GuidePoint({ number, title, text }: { number: number; title: string; text: React.ReactNode }) {
   return (
     <>
-      <div className="guideNumberSmall">{number}</div>
-      <div className="guideTextTitle">{title}</div>
-      <div className="guideText">{text}</div>
+      <div className="guidePointIndex">{number}</div>
+      <div className="guidePointTitle">{title}</div>
+      <div className="guidePointText">{text}</div>
     </>
   )
 }
@@ -283,41 +285,29 @@ function Kpi({ label, value, sub, tone = '' }: { label: string; value: string; s
   )
 }
 
-function SummaryCard({ title, rows }: { title: string; rows: string[] }) {
+function Table({ rows, cols }: { rows: Array<Record<string, any>>; cols: Array<[string, string, ((v: any) => string)?]> }) {
   return (
-    <section className="summaryCard">
-      <h3>{title}</h3>
-      <ul>
-        {rows.map((row) => (
-          <li key={row}>{row}</li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-function FileUploadButton({
-  label,
-  onFile,
-  className,
-}: {
-  label: string
-  onFile: (file: File) => void
-  className?: string
-}) {
-  return (
-    <label className={className || 'outlineButton'}>
-      {label}
-      <input
-        type="file"
-        accept=".csv,text/csv"
-        onChange={(event) => {
-          const file = event.target.files?.[0]
-          if (file) onFile(file)
-          event.currentTarget.value = ''
-        }}
-      />
-    </label>
+    <div className="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            {cols.map((col) => (
+              <th key={col[0]}>{col[1]}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={index}>
+              {cols.map((col) => {
+                const value = row[col[0]]
+                return <td key={col[0]}>{col[2] ? col[2]!(value) : String(value ?? '')}</td>
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -343,14 +333,14 @@ function Header({ onOpenGuide }: { onOpenGuide: () => void }) {
     <header className="heroHeader">
       <div className="heroBrand">
         <span className="heroLogo">
-          <Menu size={15} strokeWidth={2.2} />
+          <Menu size={14} strokeWidth={2.4} />
         </span>
         <div>
           <h1>{APP_NAME}</h1>
           <p>{APP_SUBTITLE}</p>
         </div>
       </div>
-      <button type="button" className="topRightButton" onClick={onOpenGuide}>
+      <button type="button" className="guideButton" onClick={onOpenGuide}>
         <CircleHelp size={13} />
         Panduan
       </button>
@@ -377,7 +367,7 @@ function GuideModal({
   const next = index < GUIDE_STEPS.length - 1 ? GUIDE_STEPS[index + 1] : null
 
   return (
-    <div className="guideOverlay" role="dialog" aria-modal="true" onClick={onClose}>
+    <div className="guideOverlay" role="dialog" aria-modal="true">
       <div className="guideModal" onClick={(event) => event.stopPropagation()}>
         <div className="guideModalHeader">
           <div>
@@ -388,7 +378,6 @@ function GuideModal({
             ×
           </button>
         </div>
-
         <div className="guideTabs">
           {GUIDE_STEPS.map((item) => (
             <button
@@ -401,15 +390,13 @@ function GuideModal({
             </button>
           ))}
         </div>
-
         <div className="guideContent">
-          <div className="guideHeroRow">
-            <div className="guideNumber">1</div>
-            <div className="guideHeroTitle">{current.title}</div>
+          <div className="guideMainTitleRow">
+            <div className="guideMainIndex">1</div>
+            <div className="guideMainTitle">{current.title}</div>
           </div>
-          <div className="guideItems">{current.body}</div>
+          <div className="guideBodyGrid">{current.body}</div>
         </div>
-
         <div className="guideFooter">
           <button type="button" className="guideNav" onClick={() => prev && setStep(prev.id)} disabled={!prev}>
             ← Sebelumnya
@@ -493,13 +480,24 @@ function UploadScreen({
             <div className="sectionCaption">META ADS CSV — BREAKDOWN BY CAMPAIGN + DAY</div>
             <div className="uploadCard">
               <div className="uploadIconWrap">
-                <Upload size={12} strokeWidth={2.2} />
+                <Upload size={12} strokeWidth={2.4} />
               </div>
               <div className="uploadContent">
                 <strong>Meta Ads Manager Export</strong>
                 <span>Amount spent · Link clicks · LP Views · Impressions</span>
               </div>
-              <FileUploadButton label="Upload CSV" onFile={(file) => updateWorkspace((current) => ({ ...current, metaFile: file }))} />
+              <label className="outlineButton">
+                Upload CSV
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (file) updateWorkspace((current) => ({ ...current, metaFile: file }))
+                    event.currentTarget.value = ''
+                  }}
+                />
+              </label>
             </div>
 
             <div className="sectionDivider" />
@@ -514,16 +512,24 @@ function UploadScreen({
                     onChange={(event) => updateShopeeAccount(account.id, { name: event.target.value })}
                     placeholder="Nama akun (contoh: Akun Gamis)"
                   />
-                  <FileUploadButton
-                    label="Pilih CSV"
-                    className="outlineButton compact"
-                    onFile={(file) => updateShopeeAccount(account.id, { file })}
-                  />
+                  <label className="outlineButton compact">
+                    Pilih CSV
+                    <input
+                      type="file"
+                      accept=".csv,text/csv"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0]
+                        if (file) updateShopeeAccount(account.id, { file })
+                        event.currentTarget.value = ''
+                      }}
+                    />
+                  </label>
                   <span className="fileState">{account.file?.name || 'Belum ada'}</span>
                 </div>
               ))}
             </div>
-            <button type="button" className="dashedButton" onClick={addShopeeAccount}>
+
+            <button type="button" className="dashedAction" onClick={addShopeeAccount}>
               <Plus size={13} />
               Tambah Akun Shopee
             </button>
@@ -531,22 +537,29 @@ function UploadScreen({
             <div className="sectionCaption topGap">SHOPEE CLICK REPORT — OPSIONAL (BISA DIUPLOAD SORE/H+1)</div>
             <div className="uploadCard slim">
               <div className="uploadIconWrap">
-                <Upload size={12} strokeWidth={2.2} />
+                <Upload size={12} strokeWidth={2.4} />
               </div>
               <div className="uploadContent">
                 <strong>WebsiteClickReport Shopee</strong>
                 <span>Opsional · Klik ID · Waktu Klik · Tag_link · Perujuk</span>
               </div>
-              <FileUploadButton
-                label="Upload Klik"
-                className="outlineButton"
-                onFile={(file) => updateWorkspace((current) => ({ ...current, clickFile: file }))}
-              />
+              <label className="outlineButton">
+                Upload Klik
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (file) updateWorkspace((current) => ({ ...current, clickFile: file }))
+                    event.currentTarget.value = ''
+                  }}
+                />
+              </label>
             </div>
           </div>
         </section>
 
-        <button type="button" className="dashedButton workspaceAddButton">
+        <button type="button" className="dashedAction workspaceActionStub">
           <Plus size={13} />
           Tambah Workspace (Akun Meta baru)
         </button>
@@ -595,8 +608,9 @@ function UploadScreen({
                     </strong>
                   </div>
                   <div className="historyMetaLine">
-                    1 upload tersimpan · Meta {run.analysis.quality.metaRowsUsed} rows · Shopee {run.analysis.quality.shopeeRowsUsed}{' '}
-                    rows · update {new Date(run.createdAt).toLocaleString('sv-SE').replace('T', ' ')}
+                    1 upload tersimpan · Meta {run.analysis.quality.metaRowsUsed} rows · Shopee{' '}
+                    {run.analysis.quality.shopeeRowsUsed} rows · update{' '}
+                    {new Date(run.createdAt).toLocaleString('sv-SE').replace('T', ' ')}
                   </div>
                 </div>
                 <button type="button" className="outlineButton historyOpenButton" onClick={() => onRestore(run)}>
@@ -612,34 +626,30 @@ function UploadScreen({
         </button>
 
         {error && <p className="errorText">{error}</p>}
-
         <footer className="uploadFooter">{FOOTER_TEXT}</footer>
       </div>
     </main>
   )
 }
 
-function DashboardView({
+function DashboardScreen({
   analysis,
   ppn,
   setPpn,
-  source,
-  setSource,
-  saveCurrent,
-  goBack,
-  clearHistory,
+  saveCurrentSnapshot,
+  setAnalysis,
   onOpenGuide,
 }: {
   analysis: Analysis
   ppn: number
-  setPpn: (n: number) => void
-  source: string
-  setSource: (source: string) => void
-  saveCurrent: () => void
-  goBack: () => void
-  clearHistory: () => void
+  setPpn: (value: number) => void
+  saveCurrentSnapshot: () => void
+  setAnalysis: (analysis: Analysis | null) => void
   onOpenGuide: () => void
 }) {
+  const [tab, setTab] = useState<DashboardTab>('overview')
+  const [source, setSource] = useState('Semua')
+
   const platforms = useMemo(
     () => ['Semua', ...Array.from(new Set(analysis.shopee.map((row) => row.platform))).filter(Boolean)],
     [analysis],
@@ -668,7 +678,6 @@ function DashboardView({
     roi: row.spend ? (row.commission - row.spend * (1 + ppn / 100)) / (row.spend * (1 + ppn / 100)) : 0,
   }))
 
-  const topTags = analysis.tags.slice(0, 12)
   const totals = analysis.totals
 
   return (
@@ -680,19 +689,18 @@ function DashboardView({
           <span>
             {analysis.daily[0]?.date || '-'} s/d {analysis.daily.at(-1)?.date || '-'}
           </span>
-          <label>
-            PPN
-            <input value={ppn} type="number" onChange={(event) => setPpn(Number(event.target.value) || 0)} />%
-          </label>
-          <button type="button" className="outlineButton compact topbarButton" onClick={saveCurrent}>
-            Simpan Snapshot
-          </button>
-          <button type="button" className="outlineButton compact topbarButton" onClick={goBack}>
-            Ganti file
-          </button>
-          <button type="button" className="outlineButton compact topbarButton danger" onClick={clearHistory}>
-            Hapus History
-          </button>
+          <div className="dashboardControls">
+            <label>
+              PPN
+              <input value={ppn} type="number" onChange={(event) => setPpn(Number(event.target.value) || 0)} />%
+            </label>
+            <button type="button" className="outlineButton compact" onClick={saveCurrentSnapshot}>
+              Simpan Snapshot
+            </button>
+            <button type="button" className="outlineButton compact" onClick={() => setAnalysis(null)}>
+              Ganti file
+            </button>
+          </div>
         </div>
 
         <section className="filterPanel">
@@ -716,67 +724,133 @@ function DashboardView({
         </section>
         <section className="infoBanner">ℹ Kenapa komisi di sini beda dengan dashboard Shopee? Ini pakai Komisi Bersih dari CSV.</section>
 
-        <section className="kpiGrid">
-          <Kpi label="Spend + PPN" value={rp(totals.spendPpn)} sub={`Biaya iklan Meta · PPN ${ppn}%`} />
-          <Kpi label="Total Komisi" value={rp(totals.commission)} />
-          <Kpi label="Net Profit" value={rp(totals.net)} tone={totals.net >= 0 ? 'positive' : 'negative'} />
-          <Kpi label="ROAS" value={`${totals.roas.toFixed(2)}x`} />
-          <Kpi label="ROI" value={pct(totals.roi)} tone={totals.roi >= 0 ? 'positive' : 'negative'} />
-          <Kpi label="Meta Clicks" value={fmt.format(totals.clicks)} sub={`CPC: ${rp(totals.clicks ? totals.spend / totals.clicks : 0)}`} />
-          <Kpi
-            label="LP Views (Meta)"
-            value={fmt.format(totals.lpViews)}
-            sub={`LP rate: ${pct(totals.clicks ? totals.lpViews / totals.clicks : 0)}`}
-          />
-          <Kpi label="Zero Komisi" value={pct(filteredShopee.length ? zeroOrders / filteredShopee.length : 0)} sub={`${zeroOrders} dari ${filteredShopee.length} order`} />
-        </section>
+        <nav className="dashboardMenuTabs">
+          <button type="button" className={tab === 'overview' ? 'menuTab active' : 'menuTab'} onClick={() => setTab('overview')}>
+            Overview
+          </button>
+          <button type="button" className={tab === 'campaigns' ? 'menuTab active' : 'menuTab'} onClick={() => setTab('campaigns')}>
+            Campaigns
+          </button>
+          <button type="button" className={tab === 'products' ? 'menuTab active' : 'menuTab'} onClick={() => setTab('products')}>
+            Produk
+          </button>
+          <button type="button" className={tab === 'daily' ? 'menuTab active' : 'menuTab'} onClick={() => setTab('daily')}>
+            Harian
+          </button>
+          <button type="button" className={tab === 'tags' ? 'menuTab active' : 'menuTab'} onClick={() => setTab('tags')}>
+            Atribusi Tag
+          </button>
+        </nav>
 
-        <section className="chartGrid">
-          <div className="chartPanel">
-            <h3>SPEND VS KOMISI</h3>
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={analysis.daily}>
-                <CartesianGrid stroke="#2a2a2d" strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke="#6e727b" />
-                <YAxis stroke="#6e727b" />
-                <Tooltip formatter={(value) => rp(Number(value))} />
-                <Area dataKey="spend" stroke="#8c8f99" fill="#393b40" />
-                <Area dataKey="commission" stroke="#ff5d3f" fill="#3a1712" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="chartPanel">
-            <h3>NET PROFIT HARIAN</h3>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={analysis.daily}>
-                <CartesianGrid stroke="#2a2a2d" strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke="#6e727b" />
-                <YAxis stroke="#6e727b" />
-                <Tooltip formatter={(value) => rp(Number(value))} />
-                <Bar dataKey="net" fill="#c94b4b" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
+        {tab === 'overview' && (
+          <>
+            <section className="kpiGrid">
+              <Kpi label="Spend + PPN" value={rp(totals.spendPpn)} sub={`Biaya iklan Meta · PPN ${ppn}%`} />
+              <Kpi label="Total Komisi" value={rp(totals.commission)} />
+              <Kpi label="Net Profit" value={rp(totals.net)} tone={totals.net >= 0 ? 'positive' : 'negative'} />
+              <Kpi label="ROAS" value={`${totals.roas.toFixed(2)}x`} />
+              <Kpi label="ROI" value={pct(totals.roi)} tone={totals.roi >= 0 ? 'positive' : 'negative'} />
+              <Kpi label="Meta Clicks" value={fmt.format(totals.clicks)} sub={`CPC: ${rp(totals.clicks ? totals.spend / totals.clicks : 0)}`} />
+              <Kpi label="LP Views (Meta)" value={fmt.format(totals.lpViews)} sub={`LP rate: ${pct(totals.clicks ? totals.lpViews / totals.clicks : 0)}`} />
+              <Kpi label="Zero Komisi" value={pct(filteredShopee.length ? zeroOrders / filteredShopee.length : 0)} sub={`${zeroOrders} dari ${filteredShopee.length} order`} />
+            </section>
 
-        <section className="summaryGrid">
-          <SummaryCard
-            title="Rekap Harian"
-            rows={dailyRows.slice(0, 8).map((row) => `${row.date} · Spend ${rp(row.spend)} · Komisi ${rp(row.commission)} · Net ${rp(row.net)}`)}
-          />
-          <SummaryCard
-            title="Top Campaigns"
-            rows={analysis.campaigns.slice(0, 8).map((row) => `${row.campaign} · Spend ${rp(row.spend)} · Clicks ${fmt.format(row.clicks)} · LPV ${fmt.format(row.lpViews)}`)}
-          />
-          <SummaryCard
-            title="Top Produk"
-            rows={products.slice(0, 8).map((row) => `${row.product} · Order ${fmt.format(row.orders)} · Komisi ${rp(row.commission)} · Zero ${row.zero}`)}
-          />
-          <SummaryCard
-            title="Atribusi Tag"
-            rows={topTags.map((row) => `${row.tag} · ${row.matchType} (${row.matchScore}) · Spend ${rp(row.spend)} · ROAS ${row.roas.toFixed(2)}x`)}
-          />
-        </section>
+            <section className="chartGrid">
+              <div className="chartPanel">
+                <h3>SPEND VS KOMISI</h3>
+                <ResponsiveContainer width="100%" height={260}>
+                  <AreaChart data={analysis.daily}>
+                    <CartesianGrid stroke="#2a2a2d" strokeDasharray="3 3" />
+                    <XAxis dataKey="date" stroke="#6e727b" />
+                    <YAxis stroke="#6e727b" />
+                    <Tooltip formatter={(value) => rp(Number(value))} />
+                    <Area dataKey="spend" stroke="#8c8f99" fill="#393b40" />
+                    <Area dataKey="commission" stroke="#ff5d3f" fill="#3a1712" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="chartPanel">
+                <h3>NET PROFIT HARIAN</h3>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={analysis.daily}>
+                    <CartesianGrid stroke="#2a2a2d" strokeDasharray="3 3" />
+                    <XAxis dataKey="date" stroke="#6e727b" />
+                    <YAxis stroke="#6e727b" />
+                    <Tooltip formatter={(value) => rp(Number(value))} />
+                    <Bar dataKey="net" fill="#c94b4b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          </>
+        )}
+
+        {tab === 'campaigns' && (
+          <section className="panelTable">
+            <h3>Campaign Performance</h3>
+            <Table
+              rows={analysis.campaigns}
+              cols={[
+                ['campaign', 'Campaign'],
+                ['spend', 'Spend', rp],
+                ['clicks', 'Clicks', (v) => fmt.format(Number(v))],
+                ['lpViews', 'LPV', (v) => fmt.format(Number(v))],
+                ['impressions', 'Impressions', (v) => fmt.format(Number(v))],
+                ['cpc', 'CPC', rp],
+              ]}
+            />
+          </section>
+        )}
+
+        {tab === 'products' && (
+          <section className="panelTable">
+            <h3>Top Produk</h3>
+            <Table
+              rows={products}
+              cols={[
+                ['product', 'Produk'],
+                ['orders', 'Order', (v) => fmt.format(Number(v))],
+                ['purchase', 'Purchase', rp],
+                ['commission', 'Komisi', rp],
+                ['zero', 'Zero', (v) => String(v)],
+              ]}
+            />
+          </section>
+        )}
+
+        {tab === 'daily' && (
+          <section className="panelTable">
+            <h3>Rekap Harian</h3>
+            <Table
+              rows={dailyRows}
+              cols={[
+                ['date', 'Tanggal'],
+                ['spend', 'Spend', rp],
+                ['commission', 'Komisi', rp],
+                ['net', 'Net', rp],
+                ['roi', 'ROI', (v) => pct(Number(v))],
+              ]}
+            />
+          </section>
+        )}
+
+        {tab === 'tags' && (
+          <section className="panelTable">
+            <h3>Atribusi Tag</h3>
+            <Table
+              rows={analysis.tags}
+              cols={[
+                ['tag', 'Tag'],
+                ['campaign', 'Campaign'],
+                ['matchType', 'Match'],
+                ['matchScore', 'Score', (v) => String(v)],
+                ['spend', 'Spend', rp],
+                ['commission', 'Komisi', rp],
+                ['roas', 'ROAS', (v) => `${Number(v).toFixed(2)}x`],
+              ]}
+            />
+          </section>
+        )}
       </div>
     </main>
   )
@@ -798,7 +872,6 @@ export default function App() {
   const [runs, setRuns] = useState<SavedRun[]>([])
   const [error, setError] = useState('')
   const [ppn, setPpn] = useState(11)
-  const [source, setSource] = useState('Semua')
   const [guideOpen, setGuideOpen] = useState(false)
   const [guideStep, setGuideStep] = useState<GuideStepId>('persiapan')
 
@@ -841,7 +914,6 @@ export default function App() {
       if (!shopeeFiles.length) throw new Error('Upload minimal 1 Shopee CSV.')
 
       const [metaText, ...shopeeTexts] = await Promise.all([readText(primaryWorkspace.metaFile), ...shopeeFiles.map((file) => readText(file))])
-
       const mergedShopee = shopeeTexts
         .map((text) => text.trim())
         .filter(Boolean)
@@ -871,16 +943,8 @@ export default function App() {
   async function restoreRun(run: SavedRun) {
     setAnalysis(run.analysis)
     setPpn(Math.round(run.ppn * 100))
-    setSource('Semua')
     setGuideOpen(false)
     setWorkspaces([{ ...makeWorkspace(), name: run.name }])
-  }
-
-  async function clearHistory() {
-    if (!email) return
-    const items = await listRuns(email)
-    await Promise.all(items.map((item) => (item.id ? deleteRun(item.id) : Promise.resolve())))
-    await refreshHistory(email)
   }
 
   async function saveCurrentSnapshot() {
@@ -899,26 +963,26 @@ export default function App() {
   if (!email) {
     return (
       <main className="loginPage">
-        <div className="loginOuter">
-          <div className="loginCard">
-            <div className="loginEyebrow">PRIVATE MEMBER AREA</div>
-            <h1>{APP_NAME}</h1>
-            <p>Masukkan email yang sudah di-whitelist buat akses dashboard tracking Shopee Affiliate × Meta Ads dan history campaign.</p>
-            <label className="loginLabel">Email akses</label>
-            <input
-              value={emailInput}
-              onChange={(event) => setEmailInput(event.target.value)}
-              placeholder="emailkamu@gmail.com"
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') void handleLogin()
-              }}
-            />
-            <button type="button" className="loginButton" onClick={() => void handleLogin()}>
-              Masuk Dashboard
-            </button>
-            <div className="loginFooterNote">Private tools untuk circle terdekat.</div>
-            {error && <p className="errorText centered">{error}</p>}
-          </div>
+        <div className="loginCard">
+          <div className="loginEyebrow">PRIVATE MEMBER AREA</div>
+          <h1>{APP_NAME}</h1>
+          <p>
+            Masukkan email yang sudah di-whitelist buat akses dashboard tracking Shopee Affiliate × Meta Ads dan history campaign.
+          </p>
+          <label className="loginLabel">Email akses</label>
+          <input
+            value={emailInput}
+            onChange={(event) => setEmailInput(event.target.value)}
+            placeholder="emailkamu@gmail.com"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') void handleLogin()
+            }}
+          />
+          <button type="button" className="loginButton" onClick={() => void handleLogin()}>
+            Masuk Dashboard
+          </button>
+          <div className="loginFooterNote">Private tools untuk circle terdekat.</div>
+          {error && <p className="errorText centered">{error}</p>}
         </div>
       </main>
     )
@@ -942,15 +1006,12 @@ export default function App() {
           }}
         />
       ) : (
-        <DashboardView
+        <DashboardScreen
           analysis={analysis}
           ppn={ppn}
           setPpn={setPpn}
-          source={source}
-          setSource={setSource}
-          saveCurrent={() => void saveCurrentSnapshot()}
-          goBack={() => setAnalysis(null)}
-          clearHistory={() => void clearHistory()}
+          saveCurrentSnapshot={() => void saveCurrentSnapshot()}
+          setAnalysis={setAnalysis}
           onOpenGuide={() => setGuideOpen(true)}
         />
       )}
