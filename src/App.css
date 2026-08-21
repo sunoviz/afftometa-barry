@@ -237,7 +237,7 @@ label {
 }
 
 .workspaceHeading {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   margin-bottom: 2px;
 }
@@ -436,27 +436,27 @@ label {
 
 .historyPanelHeader h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
 }
 
 .historyPanelHeader p {
   margin: 5px 0 0;
   color: #9aa2af;
-  font-size: 10.5px;
-  line-height: 1.5;
+  font-size: 10px;
+  line-height: 1.45;
   max-width: 470px;
 }
 
 .historyRow {
   grid-template-columns: 1fr auto;
-  min-height: 48px;
+  min-height: 44px;
 }
 
 .historyDateLine {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .analyzeButton {
@@ -614,7 +614,7 @@ label {
 }
 
 .datePill input {
-  width: 86px;
+  width: 78px;
   border: 0;
   background: transparent;
   color: inherit;
@@ -716,7 +716,7 @@ label {
 }
 
 .trafficPanel {
-  padding: 8px 10px;
+  padding: 7px 9px;
   margin-bottom: 12px;
 }
 
@@ -772,7 +772,7 @@ label {
 }
 
 .infoBanner {
-  padding: 8px 10px;
+  padding: 7px 9px;
   margin-bottom: 8px;
   color: #c7d8e5;
   font-size: 12px;
@@ -796,7 +796,7 @@ label {
 }
 
 .summaryStrip {
-  padding: 8px 10px;
+  padding: 7px 9px;
   margin-bottom: 16px;
 }
 
@@ -826,7 +826,7 @@ label {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .resultKpi {
@@ -857,15 +857,15 @@ label {
 
 .resultKpi strong {
   display: block;
-  font-size: 15px;
-  line-height: 1.08;
+  font-size: 14px;
+  line-height: 1.05;
 }
 
 .resultKpi small {
   display: block;
-  margin-top: 5px;
+  margin-top: 4px;
   color: #767f8c;
-  font-size: 10px;
+  font-size: 9.5px;
 }
 
 .resultKpi.danger strong,
@@ -881,12 +881,12 @@ label {
 .chartGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .chartPanel {
-  padding: 12px;
+  padding: 10px;
 }
 
 .chartPanel h3,
@@ -919,7 +919,7 @@ label {
 
 .barChartArea,
 .netChartArea {
-  height: 164px;
+  height: 152px;
   display: flex;
   align-items: flex-end;
   gap: 14px;
@@ -938,7 +938,7 @@ label {
 
 .bar,
 .netBar {
-  width: 86px;
+  width: 78px;
   max-width: 100%;
   border-radius: 3px 3px 0 0;
 }
@@ -954,7 +954,7 @@ label {
 }
 
 .dashboardTablePanel {
-  padding: 12px;
+  padding: 10px;
 }
 
 .tableHeaderRow {
@@ -980,7 +980,7 @@ label {
   border-radius: 10px;
   border: 1px solid #303236;
   background: #1a1a1a;
-  padding: 11px 12px;
+  padding: 10px 11px;
 }
 
 .metricBadge span {
@@ -992,8 +992,8 @@ label {
 
 .metricBadge strong {
   display: block;
-  font-size: 15px;
-  line-height: 1.08;
+  font-size: 14px;
+  line-height: 1.05;
 }
 
 .metricBadge small {
@@ -1005,8 +1005,8 @@ label {
 
 .produkGrid {
   display: grid;
-  grid-template-columns: 1fr 0.72fr;
-  gap: 14px;
+  grid-template-columns: 1fr 0.68fr;
+  gap: 12px;
 }
 
 .produkTablePanel {
@@ -1016,11 +1016,11 @@ label {
 .miniMetricGrid,
 .actionCounts {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .panelSpacer {
-  margin-top: 14px !important;
+  margin-top: 12px !important;
 }
 
 .categoryList {
@@ -1123,7 +1123,7 @@ label {
 
 .resultTableWrap th,
 .resultTableWrap td {
-  padding: 8px 10px;
+  padding: 7px 9px;
   border-bottom: 1px solid #2c3037;
   text-align: left;
 }
