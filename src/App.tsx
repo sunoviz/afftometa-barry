@@ -216,7 +216,7 @@ function MetricBadge({ label, value, sub }: { label: string; value: string; sub?
   )
 }
 
-function ResultScreen({ analysis, onBack, run, onOpenGuide, runs, onOpenRun }: { analysis: Analysis; onBack: () => void; run?: SavedRun | null; onOpenGuide: () => void; runs: SavedRun[]; onOpenRun: (run: SavedRun) => void }) {
+function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: Analysis; onBack: () => void; run?: SavedRun | null; runs: SavedRun[]; onOpenRun: (run: SavedRun) => void }) {
   const [tab, setTab] = useState<SidebarTab>('overview')
   const [ppn, setPpn] = useState(0)
   const [targetPerDay, setTargetPerDay] = useState('500.000')
@@ -339,7 +339,7 @@ function ResultScreen({ analysis, onBack, run, onOpenGuide, runs, onOpenRun }: {
               <h2>{tab === 'overview' ? 'Overview' : tab === 'campaigns' ? 'Campaigns' : tab === 'produk' ? 'Produk & Kategori' : tab === 'funnel' ? 'Funnel Konversi' : tab === 'atribusi' ? 'Atribusi Tag' : 'History'}</h2>
               <div className="dashboardDateText">{tab === 'history' ? 'Snapshot analisa tersimpan · membuka history tidak menggabungkan data' : `Tanggal: ${current?.date || run?.createdAt?.slice(0, 10) || '—'}`}</div>
             </div>
-            {tab !== 'history' ? <button type="button" className="guideButton" onClick={onOpenGuide}><HelpCircle size={13} />Panduan</button> : null}
+            {tab !== 'history' ? null : null}
           </div>
 
           <div className="toolbarRow">
@@ -702,7 +702,7 @@ export default function App() {
   }
 
   if (analysis) {
-    return <ResultScreen analysis={analysis} onBack={() => { setAnalysis(null); setActiveRun(null) }} run={activeRun} onOpenGuide={() => { setGuideOpen(true); setGuideStep('dashboard') }} runs={runs} onOpenRun={(saved) => { setActiveRun(saved); setAnalysis(saved.analysis) }} />
+    return <ResultScreen analysis={analysis} onBack={() => { setAnalysis(null); setActiveRun(null) }} run={activeRun} runs={runs} onOpenRun={(saved) => { setActiveRun(saved); setAnalysis(saved.analysis) }} />
   }
 
   return (

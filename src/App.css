@@ -505,9 +505,9 @@ label {
 }
 
 .dashboardSidebar {
-  background: #1a1a1a;
-  border-right: 1px solid #2b2b2b;
-  padding: 18px 0 14px;
+  background: #181818;
+  border-right: 1px solid #2a2a2a;
+  padding: 14px 0 14px;
   display: flex;
   flex-direction: column;
 }
@@ -515,28 +515,28 @@ label {
 .sidebarBrand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 18px 18px;
-  border-bottom: 1px solid #2b2b2b;
+  gap: 10px;
+  padding: 0 18px 14px;
+  border-bottom: 1px solid #2a2a2a;
 }
 
 .sidebarTitle {
   color: #f3f3f3;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1;
 }
 
 .sidebarSub {
-  color: #7f8794;
-  font-size: 12px;
-  margin-top: 4px;
+  color: #79818d;
+  font-size: 11px;
+  margin-top: 3px;
 }
 
 .sidebarNav {
   display: grid;
   gap: 2px;
-  padding: 14px 8px 0;
+  padding: 12px 8px 0;
 }
 
 .sidebarLink,
@@ -556,21 +556,21 @@ label {
 }
 
 .sidebarLink.active {
-  background: #141414;
+  background: #131313;
   color: #ff764f;
-  border: 1px solid #7e3423;
+  border-left: 2px solid #ff764f;
 }
 
 .sidebarActions {
   margin-top: auto;
   padding: 14px 8px 0;
-  border-top: 1px solid #2b2b2b;
+  border-top: 1px solid #2a2a2a;
   display: grid;
   gap: 2px;
 }
 
 .dashboardMain {
-  padding: 24px 28px 18px;
+  padding: 24px 26px 18px;
 }
 
 .dashboardTopbar {
@@ -578,26 +578,26 @@ label {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .dashboardTopbar h2 {
   margin: 0;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .dashboardDateText {
-  margin-top: 4px;
-  color: #9099a6;
-  font-size: 14px;
+  margin-top: 2px;
+  color: #8b929c;
+  font-size: 12px;
 }
 
 .toolbarRow {
   display: grid;
   grid-template-columns: auto auto auto auto;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
   margin-bottom: 18px;
 }
