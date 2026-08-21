@@ -543,6 +543,27 @@ label {
 
 .resultTablePanel {
   padding: 16px;
+  margin-top: 14px;
+}
+
+.resultNoticePanel {
+  border-radius: 14px;
+  border: 1px solid #31353d;
+  background: #191a1d;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.resultNoticePanel h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.resultNoticePanel ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #cfd4dc;
+  font-size: 13px;
 }
 
 .resultTablePanel h3 {
