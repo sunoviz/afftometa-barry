@@ -155,6 +155,8 @@ label {
   width: 640px;
   max-width: 100%;
   margin: 0 auto;
+  transform: scale(0.975);
+  transform-origin: top center;
 }
 
 .heroHeader {
