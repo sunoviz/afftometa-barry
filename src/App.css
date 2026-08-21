@@ -148,7 +148,7 @@ label {
 
 .uploadPage {
   min-height: 100vh;
-  padding: 25px 18px 42px;
+  padding: 22px 18px 40px;
 }
 
 .uploadShell {
@@ -161,19 +161,19 @@ label {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 30px;
+  gap: 14px;
+  margin-bottom: 22px;
 }
 
 .heroBrand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .heroLogo {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 10px;
   display: grid;
   place-items: center;
@@ -182,8 +182,8 @@ label {
 }
 
 .heroBrand h1 {
-  margin: 0 0 4px;
-  font-size: 19px;
+  margin: 0 0 3px;
+  font-size: 18px;
   line-height: 1;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -192,7 +192,7 @@ label {
 .heroBrand p {
   margin: 0;
   color: #96a0af;
-  font-size: 11.5px;
+  font-size: 11px;
 }
 
 .guideButton,
@@ -237,15 +237,15 @@ label {
 }
 
 .workspaceHeading {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   margin-bottom: 4px;
 }
 
 .workspaceSubheading {
-  margin: 0 0 14px;
+  margin: 0 0 12px;
   color: #676f7c;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .workspacePanel,
@@ -262,32 +262,32 @@ label {
 
 .workspaceBar {
   display: grid;
-  grid-template-columns: 24px 1fr auto;
+  grid-template-columns: 22px 1fr auto;
   align-items: center;
-  gap: 12px;
-  min-height: 46px;
-  padding: 0 14px;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
   border-bottom: 1px solid #2d3138;
 }
 
 .workspaceIndex,
 .guideHeaderIndex,
 .guideNumber {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 8px;
   display: grid;
   place-items: center;
   background: rgba(238, 77, 45, 0.1);
   border: 1px solid rgba(238, 77, 45, 0.55);
   color: #ff7b5d;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
 .workspaceNameInput,
 .shopeeAccountRow input {
-  height: 34px;
+  height: 32px;
   border: 1px solid #3a4048;
   border-radius: 10px;
   background: #15181d;
@@ -295,26 +295,19 @@ label {
   padding: 0 12px;
 }
 
-.workspaceNameInput {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  height: auto;
-}
-
 .workspaceStatus {
   color: #6f7680;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .workspaceBody {
-  padding: 14px;
+  padding: 12px;
 }
 
 .sectionCaption {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: #666b73;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -329,24 +322,24 @@ label {
 .historyRow {
   display: grid;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #383c43;
   background: #242426;
 }
 
 .uploadCard {
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 26px 1fr auto;
 }
 
 .shopeeAccountRow {
-  grid-template-columns: 24px 1fr auto auto;
+  grid-template-columns: 22px 1fr auto auto;
 }
 
 .uploadIconWrap {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 8px;
   display: grid;
   place-items: center;
@@ -358,11 +351,11 @@ label {
 .uploadContent {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .uploadContent strong {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -372,7 +365,7 @@ label {
 .historyEmpty,
 .uploadFooter {
   color: #8b94a2;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .sectionDivider {
@@ -410,15 +403,15 @@ label {
 
 .notesPanel,
 .historyPanel {
-  margin-top: 14px;
-  padding: 16px;
+  margin-top: 12px;
+  padding: 14px;
 }
 
 .notesPanel p {
   margin: 0;
   color: #c3cad4;
-  font-size: 12px;
-  line-height: 1.72;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .notesPanel p + p {
@@ -438,32 +431,32 @@ label {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .historyPanelHeader h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .historyPanelHeader p {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   color: #9aa2af;
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 11px;
+  line-height: 1.5;
   max-width: 470px;
 }
 
 .historyRow {
   grid-template-columns: 1fr auto;
-  min-height: 56px;
+  min-height: 48px;
 }
 
 .historyDateLine {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .analyzeButton {
