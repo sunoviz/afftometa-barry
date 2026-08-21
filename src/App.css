@@ -51,7 +51,7 @@ label {
 .loginCard {
   width: 420px;
   max-width: 100%;
-  padding: 27px 28px 28px;
+  padding: 28px 28px 26px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: #171b24;
@@ -68,28 +68,28 @@ label {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .loginCard h1 {
   margin: 0;
-  font-size: 29px;
+  font-size: 28px;
   line-height: 1.08;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
 .loginCard p {
-  margin: 13px 0 0;
+  margin: 12px 0 0;
   color: #99a8c0;
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.55;
-  max-width: 330px;
+  max-width: 334px;
 }
 
 .loginLabel {
   display: block;
-  margin-top: 18px;
+  margin-top: 20px;
   margin-bottom: 8px;
   color: #eef2f7;
   font-size: 14px;
@@ -99,7 +99,7 @@ label {
 .loginCard input {
   width: 362px;
   max-width: 100%;
-  height: 48px;
+  height: 46px;
   padding: 0 14px;
   border-radius: 14px;
   border: 1px solid rgb(255, 33, 0);
@@ -124,19 +124,19 @@ label {
 .loginButton {
   width: 362px;
   max-width: 100%;
-  margin-top: 14px;
-  height: 48px;
+  margin-top: 12px;
+  height: 46px;
   border-radius: 14px;
   background: rgb(248, 74, 37);
   color: #fff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .loginFooterNote {
-  margin-top: 12px;
+  margin-top: 10px;
   color: #778296;
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
 }
 
