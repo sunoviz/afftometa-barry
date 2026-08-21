@@ -27,6 +27,7 @@ type ResultRow = {
 const APP_NAME = 'Satruk Affiliate Tracker'
 const APP_SUBTITLE = 'Shopee × Meta Ads History Tracker'
 const FOOTER_TEXT = '© 2026 Satruk Affiliate Tracker — private server build'
+const SAMPLE_MODE = true
 const fmt = new Intl.NumberFormat('id-ID')
 const rp = (n: number) => `Rp ${fmt.format(Math.round(n || 0))}`
 const readText = (file: File) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = reject; reader.readAsText(file, 'UTF-8') })
@@ -81,6 +82,15 @@ export default function App() {
 
   async function handleAnalyze() {
     try {
+      if (SAMPLE_MODE && !workspace.metaFile) {
+        const [metaText, shopeeText] = await Promise.all([
+          fetch('/sample/meta.csv').then((r) => r.text()),
+          fetch('/sample/shopee.csv').then((r) => r.text()),
+        ])
+        const result = analyze(metaText, shopeeText, 0.11)
+        setAnalysis(result)
+        return
+      }
       if (!workspace.metaFile) throw new Error('Upload Meta CSV dulu.')
       const shopeeFiles = workspace.shopeeAccounts.filter((x) => x.file).map((x) => x.file as File)
       if (!shopeeFiles.length) throw new Error('Upload Shopee CSV dulu.')
