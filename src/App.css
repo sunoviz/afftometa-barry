@@ -493,6 +493,85 @@ label {
   border-top: 1px solid #24282f;
 }
 
+.resultPage {
+  min-height: 100vh;
+  padding: 25px 18px 42px;
+}
+
+.resultShell {
+  width: 640px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.resultTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.resultKpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  flex: 1;
+}
+
+.resultKpi,
+.resultTablePanel {
+  border-radius: 14px;
+  border: 1px solid #31353d;
+  background: #191a1d;
+}
+
+.resultKpi {
+  padding: 14px;
+}
+
+.resultKpi span {
+  display: block;
+  color: #8b94a2;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.resultKpi strong {
+  font-size: 20px;
+}
+
+.resultTablePanel {
+  padding: 16px;
+}
+
+.resultTablePanel h3 {
+  margin: 0 0 12px;
+}
+
+.resultTableWrap {
+  overflow: auto;
+}
+
+.resultTableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.resultTableWrap th,
+.resultTableWrap td {
+  padding: 10px;
+  border-bottom: 1px solid #2c3037;
+  text-align: left;
+}
+
+.resultTableWrap th {
+  color: #8b94a2;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
 .guideOverlay {
   position: fixed;
   inset: 0;
