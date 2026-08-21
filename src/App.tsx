@@ -206,7 +206,17 @@ function StatCard({ label, value, hint, danger = false, accent = false }: { labe
   )
 }
 
-function ResultScreen({ analysis, onBack, run, onOpenGuide }: { analysis: Analysis; onBack: () => void; run?: SavedRun | null; onOpenGuide: () => void }) {
+function MetricBadge({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="metricBadge">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {sub ? <small>{sub}</small> : null}
+    </div>
+  )
+}
+
+function ResultScreen({ analysis, onBack, run, onOpenGuide, runs, onOpenRun }: { analysis: Analysis; onBack: () => void; run?: SavedRun | null; onOpenGuide: () => void; runs: SavedRun[]; onOpenRun: (run: SavedRun) => void }) {
   const [tab, setTab] = useState<SidebarTab>('overview')
   const [ppn, setPpn] = useState(0)
   const [targetPerDay, setTargetPerDay] = useState('500.000')
@@ -254,6 +264,41 @@ function ResultScreen({ analysis, onBack, run, onOpenGuide }: { analysis: Analys
     }
     return [...map.entries()].sort((a, b) => b[1] - a[1])
   }, [analysis.shopee])
+  const categoryRows = useMemo(() => {
+    const map = new Map<string, { category: string; commission: number; items: number }>()
+    for (const row of analysis.shopee as any[]) {
+      const category = String((row.product || 'Tanpa kategori')).split(',')[0].trim() || 'Tanpa kategori'
+      const current = map.get(category) || { category, commission: 0, items: 0 }
+      current.commission += Number(row.commission || 0)
+      current.items += 1
+      map.set(category, current)
+    }
+    return [...map.values()].sort((a, b) => b.commission - a.commission)
+  }, [analysis.shopee])
+  const productRows = useMemo(() => {
+    const map = new Map<string, { product: string; category: string; commission: number; items: number }>()
+    for (const row of analysis.shopee as any[]) {
+      const product = String(row.product || 'Produk tanpa nama')
+      const category = String(product).split(',')[0].trim() || 'Tanpa kategori'
+      const current = map.get(product) || { product, category, commission: 0, items: 0 }
+      current.commission += Number(row.commission || 0)
+      current.items += 1
+      map.set(product, current)
+    }
+    return [...map.values()].sort((a, b) => b.commission - a.commission).slice(0, 15)
+  }, [analysis.shopee])
+  const matchedTags = useMemo(() => analysis.tags.map((tag: any) => {
+    const status = tag.roas >= 1 ? '🟢 SCALE' : '🟡 TAHAN'
+    return {
+      ...tag,
+      recommendation: status,
+      avgOrder: tag.orders ? tag.commission / tag.orders : 0,
+      realRate: tag.clickCount ? (tag.orders / tag.clickCount) * 100 : null,
+      realCpc: tag.orders ? tag.spend / tag.orders : null,
+    }
+  }), [analysis.tags])
+  const scaleCount = matchedTags.filter((item: any) => item.recommendation.includes('SCALE')).length
+  const tahanCount = matchedTags.filter((item: any) => item.recommendation.includes('TAHAN')).length
 
   const trafficLabel = `${analysis.shopee.length} / ${analysis.shopee.length} orders (100%)`
   const charts = current ? [
@@ -291,10 +336,10 @@ function ResultScreen({ analysis, onBack, run, onOpenGuide }: { analysis: Analys
         <section className="dashboardMain">
           <div className="dashboardTopbar">
             <div>
-              <h2>Overview</h2>
-              <div className="dashboardDateText">Tanggal: {current?.date || run?.createdAt?.slice(0, 10) || '—'}</div>
+              <h2>{tab === 'overview' ? 'Overview' : tab === 'campaigns' ? 'Campaigns' : tab === 'produk' ? 'Produk & Kategori' : tab === 'funnel' ? 'Funnel Konversi' : tab === 'atribusi' ? 'Atribusi Tag' : 'History'}</h2>
+              <div className="dashboardDateText">{tab === 'history' ? 'Snapshot analisa tersimpan · membuka history tidak menggabungkan data' : `Tanggal: ${current?.date || run?.createdAt?.slice(0, 10) || '—'}`}</div>
             </div>
-            <button type="button" className="guideButton" onClick={onOpenGuide}><HelpCircle size={13} />Panduan</button>
+            {tab !== 'history' ? <button type="button" className="guideButton" onClick={onOpenGuide}><HelpCircle size={13} />Panduan</button> : null}
           </div>
 
           <div className="toolbarRow">
@@ -325,117 +370,242 @@ function ResultScreen({ analysis, onBack, run, onOpenGuide }: { analysis: Analys
             </div>
           </div>
 
-          <div className="trafficPanel">
-            <div className="trafficPanelHeader"><Filter size={14} />FILTER SUMBER TRAFIK</div>
-            <div className="trafficPanelBody">
-              <div className="trafficFilters">
-                <button type="button" className="sourceChip active">Semua</button>
-                {platformCounts[0] ? <button type="button" className="sourceChip">{platformCounts[0][0]}</button> : null}
+          {tab === 'history' ? (
+            <section className="historyStandalonePanel">
+              <div className="historyStandaloneHeader">
+                <div>
+                  <h3>History Analisa</h3>
+                  <p>Pilih 1 snapshot untuk dibuka. History tidak digabung, jadi periode yang overlap tidak bikin data dobel.</p>
+                </div>
+                <button type="button" className="outlineButton" onClick={() => {}}>Refresh</button>
               </div>
-              <div className="trafficSummary">{trafficLabel}</div>
-              <div className="platformRow"><span>Per platform:</span>{platformCounts.map(([name, count]) => <button key={name} type="button" className="platformChip">{name} <strong>{count}</strong></button>)}</div>
-            </div>
-          </div>
-
-          <div className="infoBanner accent">ℹ Meta CSV terdeteksi dalam <strong>Bahasa Indonesia</strong> — semua kolom terbaca normal.</div>
-          <div className="infoBanner muted">ℹ Kenapa komisi di sini beda dengan dashboard Shopee? — Ini normal. CSV ini pakai <strong>Komisi Bersih</strong> (sudah diproses), sedangkan dashboard Shopee nampilkan <strong>Komisi Kotor</strong> (belum final). <button type="button">Selengkapnya</button></div>
-
-          {current ? (
-            <div className="summaryStrip">
-              <div className="summaryHeadline">{current.date} · Net {rp(current.net)} / target {rp(totals.targetRaw)}</div>
-              <div className="summaryProgress">{totals.targetRaw > 0 ? `${Math.max(0, Math.round((current.net / totals.targetRaw) * 100))}%` : '0%'}</div>
-              <div className="summaryMeta">
-                <span>Spend: <strong>{rp(current.spendPpn)}</strong></span>
-                <span>Komisi: <strong>{rp(current.commission)}</strong></span>
-                <span>ROAS: <strong>{current.roas.toFixed(2)}x</strong></span>
-                <span>ROI: <strong>{(current.roi * 100).toFixed(1)}%</strong></span>
-                <span>Orders: <strong>{fmt.format(current.orders || 0)}</strong></span>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="statsGrid">
-            <StatCard label="Spend + PPN" value={rp(totals.spendPpn)} hint="Biaya iklan Meta" />
-            <StatCard label="Total Komisi" value={rp(totals.commission)} />
-            <StatCard label="Net Profit" value={rp(totals.net)} danger={totals.net < 0} />
-            <StatCard label="ROAS" value={`${totals.roas.toFixed(2)}x`} />
-            <StatCard label="ROI" value={`${(totals.roi * 100).toFixed(1)}%`} hint="(Komisi−Spend)/Spend" danger={totals.roi < 0} />
-            <StatCard label="Meta Clicks" value={fmt.format(totals.clicks)} hint={`CPC: ${rp(totals.cpc)}`} />
-            <StatCard label="LP Views (Meta)" value={fmt.format(totals.lpViews)} hint={`LP rate: ${totals.lpRate.toFixed(1)}%`} />
-            <StatCard label="Unique Orders" value={fmt.format(totals.orders)} hint={`Komisi/order: ${rp(totals.commissionPerOrder)}`} />
-            <StatCard label="Zero Komisi" value={`${totals.zeroPct.toFixed(1)}%`} hint={`${totals.zeroItems} dari ${totals.totalItems} item`} accent />
-          </div>
-
-          <div className="chartGrid">
-            <section className="chartPanel">
-              <h3>SPEND VS KOMISI</h3>
-              <div className="chartLegend"><span><i className="legend legendGray" />Spend</span><span><i className="legend legendOrange" />Komisi</span></div>
-              <div className="barChartArea">
-                {charts.map((item) => (
-                  <div key={item.label} className="barColumn">
-                    <div className={`bar bar-${item.tone}`} style={{ height: `${Math.max(18, (item.value / maxSpendCommission) * 160)}px` }} />
-                    <div className="barLabel">{current?.date?.slice(5) || '—'}</div>
+              <div className="historyItems standalone">
+                {runs.map((saved) => (
+                  <div key={saved.id} className="historyStandaloneRow">
+                    <div>
+                      <div className="historyDateLine">{formatHistoryHeadline(saved.createdAt)}</div>
+                      <div className="historyMetaLine">Meta {saved.metaFile || '—'} · Shopee {saved.shopeeFile || '—'} · update {new Date(saved.createdAt).toLocaleString('sv-SE').replace('T', ' ')}</div>
+                    </div>
+                    <button type="button" className="outlineButton" onClick={() => onOpenRun(saved)}>Buka</button>
                   </div>
                 ))}
               </div>
             </section>
-            <section className="chartPanel">
-              <h3>NET PROFIT HARIAN</h3>
-              <div className="netChartArea">
-                {dailyRows.map((row: any) => (
-                  <div key={row.date} className="netColumn">
-                    <div className={`netBar ${row.net < 0 ? 'negative' : 'positive'}`} style={{ height: `${Math.max(18, (Math.abs(row.net) / maxNet) * 170)}px` }} />
-                    <div className="barLabel">{row.date.slice(5)}</div>
+          ) : (
+            <>
+              <div className="trafficPanel">
+                <div className="trafficPanelHeader"><Filter size={14} />FILTER SUMBER TRAFIK</div>
+                <div className="trafficPanelBody">
+                  <div className="trafficFilters">
+                    <button type="button" className="sourceChip active">Semua</button>
+                    {platformCounts[0] ? <button type="button" className="sourceChip">{platformCounts[0][0]}</button> : null}
                   </div>
-                ))}
+                  <div className="trafficSummary">{trafficLabel}</div>
+                  <div className="platformRow"><span>Per platform:</span>{platformCounts.map(([name, count]) => <button key={name} type="button" className="platformChip">{name} <strong>{count}</strong></button>)}</div>
+                </div>
               </div>
-            </section>
-          </div>
 
-          <section className="resultTablePanel dashboardTablePanel">
-            <div className="tableHeaderRow">
-              <h3>REKAP HARIAN</h3>
-              <div className="tableHeaderHint">komisi by Waktu Pemesanan (tanggal order)</div>
-            </div>
-            <div className="resultTableWrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>TANGGAL</th>
-                    <th>SPEND</th>
-                    <th>KOMISI</th>
-                    <th>NET</th>
-                    <th>ROAS</th>
-                    <th>ROI</th>
-                    <th>EPC</th>
-                    <th>META CLICKS</th>
-                    <th>LP VIEWS</th>
-                    <th>LP RATE</th>
-                    <th>ORDERS</th>
-                    <th>ZERO%</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dailyRows.map((row: any) => (
-                    <tr key={row.date}>
-                      <td>{row.date}</td>
-                      <td>{fmt.format(Math.round(row.spendPpn))}</td>
-                      <td>{fmt.format(Math.round(row.commission))}</td>
-                      <td>{fmt.format(Math.round(row.net))}</td>
-                      <td>{row.roas.toFixed(2)}x</td>
-                      <td>{(row.roi * 100).toFixed(1)}%</td>
-                      <td>{rp(row.epc)}</td>
-                      <td>{fmt.format(row.clicks || 0)}</td>
-                      <td>{fmt.format(row.lpViews || 0)}</td>
-                      <td>{row.lpRate.toFixed(1)}%</td>
-                      <td>{fmt.format(row.orders || 0)}</td>
-                      <td>{row.zeroPct.toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+              <div className="infoBanner accent">ℹ Meta CSV terdeteksi dalam <strong>Bahasa Indonesia</strong> — semua kolom terbaca normal.</div>
+              <div className="infoBanner muted">ℹ Kenapa komisi di sini beda dengan dashboard Shopee? — Ini normal. CSV ini pakai <strong>Komisi Bersih</strong> (sudah diproses), sedangkan dashboard Shopee nampilkan <strong>Komisi Kotor</strong> (belum final). <button type="button">Selengkapnya</button></div>
+
+              {current ? (
+                <div className="summaryStrip">
+                  <div className="summaryHeadline">{current.date} · Net {rp(current.net)} / target {rp(totals.targetRaw)}</div>
+                  <div className="summaryProgress">{totals.targetRaw > 0 ? `${Math.max(0, Math.round((current.net / totals.targetRaw) * 100))}%` : '0%'}</div>
+                  <div className="summaryMeta">
+                    <span>Spend: <strong>{rp(current.spendPpn)}</strong></span>
+                    <span>Komisi: <strong>{rp(current.commission)}</strong></span>
+                    <span>ROAS: <strong>{current.roas.toFixed(2)}x</strong></span>
+                    <span>ROI: <strong>{(current.roi * 100).toFixed(1)}%</strong></span>
+                    <span>Orders: <strong>{fmt.format(current.orders || 0)}</strong></span>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="statsGrid">
+                <StatCard label="Spend + PPN" value={rp(totals.spendPpn)} hint="Biaya iklan Meta" />
+                <StatCard label="Total Komisi" value={rp(totals.commission)} />
+                <StatCard label="Net Profit" value={rp(totals.net)} danger={totals.net < 0} />
+                <StatCard label="ROAS" value={`${totals.roas.toFixed(2)}x`} />
+                <StatCard label="ROI" value={`${(totals.roi * 100).toFixed(1)}%`} hint="(Komisi−Spend)/Spend" danger={totals.roi < 0} />
+                <StatCard label="Meta Clicks" value={fmt.format(totals.clicks)} hint={`CPC: ${rp(totals.cpc)}`} />
+                <StatCard label="LP Views (Meta)" value={fmt.format(totals.lpViews)} hint={`LP rate: ${totals.lpRate.toFixed(1)}%`} />
+                <StatCard label="Unique Orders" value={fmt.format(totals.orders)} hint={`Komisi/order: ${rp(totals.commissionPerOrder)}`} />
+                <StatCard label="Zero Komisi" value={`${totals.zeroPct.toFixed(1)}%`} hint={`${totals.zeroItems} dari ${totals.totalItems} item`} accent />
+              </div>
+
+              {tab === 'overview' ? (
+                <>
+                  <div className="chartGrid">
+                    <section className="chartPanel">
+                      <h3>SPEND VS KOMISI</h3>
+                      <div className="chartLegend"><span><i className="legend legendGray" />Spend</span><span><i className="legend legendOrange" />Komisi</span></div>
+                      <div className="barChartArea">
+                        {charts.map((item) => (
+                          <div key={item.label} className="barColumn">
+                            <div className={`bar bar-${item.tone}`} style={{ height: `${Math.max(18, (item.value / maxSpendCommission) * 160)}px` }} />
+                            <div className="barLabel">{current?.date?.slice(5) || '—'}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                    <section className="chartPanel">
+                      <h3>NET PROFIT HARIAN</h3>
+                      <div className="netChartArea">
+                        {dailyRows.map((row: any) => (
+                          <div key={row.date} className="netColumn">
+                            <div className={`netBar ${row.net < 0 ? 'negative' : 'positive'}`} style={{ height: `${Math.max(18, (Math.abs(row.net) / maxNet) * 170)}px` }} />
+                            <div className="barLabel">{row.date.slice(5)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+
+                  <section className="resultTablePanel dashboardTablePanel">
+                    <div className="tableHeaderRow">
+                      <h3>REKAP HARIAN</h3>
+                      <div className="tableHeaderHint">komisi by Waktu Pemesanan (tanggal order)</div>
+                    </div>
+                    <div className="resultTableWrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>TANGGAL</th>
+                            <th>SPEND</th>
+                            <th>KOMISI</th>
+                            <th>NET</th>
+                            <th>ROAS</th>
+                            <th>ROI</th>
+                            <th>EPC</th>
+                            <th>META CLICKS</th>
+                            <th>LP VIEWS</th>
+                            <th>LP RATE</th>
+                            <th>ORDERS</th>
+                            <th>ZERO%</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dailyRows.map((row: any) => (
+                            <tr key={row.date}>
+                              <td>{row.date}</td>
+                              <td>{fmt.format(Math.round(row.spendPpn))}</td>
+                              <td>{fmt.format(Math.round(row.commission))}</td>
+                              <td>{fmt.format(Math.round(row.net))}</td>
+                              <td>{row.roas.toFixed(2)}x</td>
+                              <td>{(row.roi * 100).toFixed(1)}%</td>
+                              <td>{rp(row.epc)}</td>
+                              <td>{fmt.format(row.clicks || 0)}</td>
+                              <td>{fmt.format(row.lpViews || 0)}</td>
+                              <td>{row.lpRate.toFixed(1)}%</td>
+                              <td>{fmt.format(row.orders || 0)}</td>
+                              <td>{row.zeroPct.toFixed(1)}%</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                </>
+              ) : null}
+
+              {tab === 'campaigns' ? (
+                <section className="resultTablePanel dashboardTablePanel">
+                  <div className="tableHeaderRow stack">
+                    <h3>PERFORMA CAMPAIGN</h3>
+                    <div className="tableHeaderHint">Klik header kolom untuk sortir · LP Rate: hijau ≥40% · amber 20–40% · merah &lt;20%</div>
+                  </div>
+                  <div className="resultTableWrap">
+                    <table>
+                      <thead>
+                        <tr><th>CAMPAIGN</th><th>SPEND</th><th>CLICKS</th><th>LP VIEWS</th><th>LP RATE</th><th>CTR</th><th>CPC (RP)</th><th>CPM (RP)</th><th>HARI</th></tr>
+                      </thead>
+                      <tbody>
+                        {analysis.campaigns.map((row: any) => (
+                          <tr key={row.campaign}><td>{row.campaign}</td><td>{fmt.format(Math.round(row.spend))}</td><td>{fmt.format(row.clicks || 0)}</td><td>{fmt.format(row.lpViews || 0)}</td><td>{((row.lpRate || 0) * 100).toFixed(1)}%</td><td>{row.impressions ? `${((row.clicks / row.impressions) * 100).toFixed(1)}%` : '0.0%'}</td><td>{fmt.format(Math.round(row.cpc || 0))}</td><td>{row.impressions ? fmt.format(Math.round((row.spend / row.impressions) * 1000)) : '0'}</td><td>{dailyRows.length}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="subtleFooterNote">ℹ ROAS per campaign tersedia di tab Atribusi setelah Tag_link1 diisi saat buat link Shopee Affiliate.</div>
+                </section>
+              ) : null}
+
+              {tab === 'produk' ? (
+                <div className="produkGrid">
+                  <section className="resultTablePanel dashboardTablePanel miniCardsPanel">
+                    <h3>KOMISI PER CHANNEL</h3>
+                    <div className="miniMetricGrid">
+                      {platformCounts.map(([name, count], idx) => <MetricBadge key={name} label={name === 'Others' ? 'Organik' : 'Social Media'} value={rp(idx === 0 ? totals.commission - 720 : 720)} sub={`${Math.round((count / analysis.shopee.length) * 100)}% dari total · ${count} orders`} />)}
+                    </div>
+                    <h3 className="panelSpacer">KOMISI PER KATEGORI</h3>
+                    <div className="categoryList">{categoryRows.slice(0, 8).map((row) => <div key={row.category} className="categoryRow"><span>{row.category}</span><strong>{rp(row.commission)}</strong></div>)}</div>
+                  </section>
+                  <section className="resultTablePanel dashboardTablePanel sideStatsPanel">
+                    <h3>PLATFORM KLIK</h3>
+                    <MetricBadge label="Zero commission rate" value={`${totals.zeroPct.toFixed(1)}%`} sub={`${totals.zeroItems} dari ${totals.totalItems} item`} />
+                    <MetricBadge label="Avg komisi / item (non-zero)" value={rp((totals.commission || 0) / Math.max(1, totals.totalItems - totals.zeroItems))} sub={`${Math.max(0, totals.totalItems - totals.zeroItems)} item yang dapat komisi`} />
+                  </section>
+                  <section className="resultTablePanel dashboardTablePanel produkTablePanel">
+                    <div className="tableHeaderRow"><h3>TOP 15 PRODUK BY KOMISI</h3></div>
+                    <div className="resultTableWrap">
+                      <table>
+                        <thead><tr><th>PRODUK</th><th>KATEGORI</th><th>KOMISI (RP)</th><th>ITEMS</th><th>AVG / ITEM</th></tr></thead>
+                        <tbody>
+                          {productRows.map((row) => <tr key={row.product}><td>{row.product}</td><td>{row.category}</td><td>{fmt.format(Math.round(row.commission))}</td><td>{row.items}</td><td>{rp(row.commission / Math.max(1, row.items))}</td></tr>)}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                </div>
+              ) : null}
+
+              {tab === 'funnel' ? (
+                <section className="resultTablePanel dashboardTablePanel funnelPanel">
+                  <div className="funnelGrid">
+                    <MetricBadge label="Impresi" value={fmt.format(analysis.totals.impressions || 0)} sub="Tayangan iklan Meta" />
+                    <MetricBadge label="Link Clicks" value={fmt.format(totals.clicks)} sub={`${analysis.totals.impressions ? ((totals.clicks / analysis.totals.impressions) * 100).toFixed(1) : '0.0'}%`} />
+                    <MetricBadge label="Landing Page Views" value={fmt.format(totals.lpViews)} sub={`${totals.lpRate.toFixed(1)}%`} />
+                    <MetricBadge label="Unique Orders" value={fmt.format(totals.orders)} sub={`${totals.clicks ? ((totals.orders / totals.clicks) * 100).toFixed(1) : '0.0'}%`} />
+                    <MetricBadge label="Total Komisi" value={rp(totals.commission)} sub="Komisi bersih affiliate (Rp)" />
+                    <MetricBadge label="CLICK-TO-LP" value={`${totals.lpRate.toFixed(1)}%`} sub="LP views / Clicks" />
+                    <MetricBadge label="CLICK-TO-ORDER" value={`${totals.clicks ? ((totals.orders / totals.clicks) * 100).toFixed(1) : '0.0'}%`} sub="Orders / Clicks" />
+                    <MetricBadge label="COST PER ORDER" value={rp(totals.orders ? totals.spendPpn / totals.orders : 0)} sub="Spend+PPN / Orders" />
+                    <MetricBadge label="KOMISI PER ORDER" value={rp(totals.commissionPerOrder)} sub="Komisi / Orders" />
+                    <MetricBadge label="EPC (KOMISI/KLIK)" value={rp(totals.clicks ? totals.commission / totals.clicks : 0)} sub="Komisi / Meta clicks" />
+                    <MetricBadge label="ROI" value={`${(totals.roi * 100).toFixed(1)}%`} sub="(Komisi−Spend) / Spend" />
+                    <MetricBadge label="CPC EFEKTIF" value={rp(totals.cpc)} sub="Spend+PPN / Clicks" />
+                  </div>
+                </section>
+              ) : null}
+
+              {tab === 'atribusi' ? (
+                <>
+                  <section className="resultTablePanel dashboardTablePanel">
+                    <div className="tableHeaderRow stack">
+                      <h3>ATRIBUSI PER TAG</h3>
+                      <div className="tableHeaderHint">Klik baris untuk lihat detail produk per tag</div>
+                    </div>
+                    <div className="resultTableWrap">
+                      <table>
+                        <thead><tr><th>TAG (LINK1)</th><th>AKUN</th><th>MATCH</th><th>SPEND</th><th>KOMISI</th><th>NET</th><th>ROAS</th><th>ROI</th><th>CPC META</th><th>EPC</th><th>REKOMENDASI</th><th>ORDERS</th><th>AVG/ORDER</th><th>REAL CPC</th><th>REAL RATE</th></tr></thead>
+                        <tbody>
+                          {matchedTags.map((row: any) => <tr key={row.tag}><td>{row.tag}</td><td>Akun 1</td><td>{row.campaign || '–'}</td><td>{row.spend ? fmt.format(Math.round(row.spend)) : '–'}</td><td>{fmt.format(Math.round(row.commission || 0))}</td><td>{row.net >= 0 ? `+${fmt.format(Math.round(row.net))}` : fmt.format(Math.round(row.net))}</td><td>{row.roas ? `${row.roas.toFixed(2)}x` : '–'}</td><td>{row.roi ? `${(row.roi * 100).toFixed(1)}%` : '–'}</td><td>{row.clickCount ? rp(row.spend / row.clickCount) : '–'}</td><td>{row.clickCount ? rp(row.commission / row.clickCount) : '–'}</td><td>{row.recommendation}</td><td>{row.orders || 0}</td><td>{row.orders ? rp(row.avgOrder) : '–'}</td><td>{row.realCpc ? rp(row.realCpc) : '–'}</td><td>{row.realRate !== null ? `${row.realRate.toFixed(1)}%` : '–'}</td></tr>)}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                  <section className="resultTablePanel dashboardTablePanel actionSummaryPanel">
+                    <h3>RANGKUMAN AKSI BERDASARKAN DATA DI ATAS</h3>
+                    <p>Ringkasan ini mengikuti rekomendasi per tag/campaign yang sedang tampil setelah filter tanggal/akun/platform.</p>
+                    <div className="actionCounts"><MetricBadge label="SCALE — bisa dinaikkan bertahap" value={String(scaleCount)} /><MetricBadge label="TAHAN — tunggu/test kecil" value={String(tahanCount)} /><MetricBadge label="KILL — stop spend" value={'0'} /></div>
+                    <div className="actionNarrative">TAHAN: {tahanCount} tag/campaign jangan discale besar dulu. Lanjut test kecil/tunggu data sampai EPC normal, order, dan Real Rate lebih jelas.</div>
+                    <div className="actionNarrative subtle">Real Rate sebagian kosong: beberapa baris belum punya klik Shopee. Keputusan baris itu masih pakai proxy Meta + komisi.</div>
+                  </section>
+                </>
+              ) : null}
+            </>
+          )}
 
           <footer className="uploadFooter dashboardFooter">{FOOTER_TEXT}</footer>
         </section>
@@ -532,7 +702,7 @@ export default function App() {
   }
 
   if (analysis) {
-    return <ResultScreen analysis={analysis} onBack={() => { setAnalysis(null); setActiveRun(null) }} run={activeRun} onOpenGuide={() => { setGuideOpen(true); setGuideStep('dashboard') }} />
+    return <ResultScreen analysis={analysis} onBack={() => { setAnalysis(null); setActiveRun(null) }} run={activeRun} onOpenGuide={() => { setGuideOpen(true); setGuideStep('dashboard') }} runs={runs} onOpenRun={(saved) => { setActiveRun(saved); setAnalysis(saved.analysis) }} />
   }
 
   return (

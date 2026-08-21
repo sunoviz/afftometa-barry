@@ -971,6 +971,148 @@ label {
   margin-bottom: 12px;
 }
 
+.tableHeaderRow.stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.subtleFooterNote {
+  margin-top: 12px;
+  color: #8a92a0;
+  font-size: 12px;
+}
+
+.metricBadge {
+  border-radius: 12px;
+  border: 1px solid #303236;
+  background: #1a1a1a;
+  padding: 14px;
+}
+
+.metricBadge span {
+  display: block;
+  color: #8b94a2;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.metricBadge strong {
+  display: block;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.metricBadge small {
+  display: block;
+  margin-top: 8px;
+  color: #7e8794;
+  font-size: 12px;
+}
+
+.produkGrid {
+  display: grid;
+  grid-template-columns: 0.9fr 0.8fr;
+  gap: 16px;
+}
+
+.produkTablePanel {
+  grid-column: 1 / -1;
+}
+
+.miniMetricGrid,
+.actionCounts {
+  display: grid;
+  gap: 10px;
+}
+
+.panelSpacer {
+  margin-top: 18px !important;
+}
+
+.categoryList {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.categoryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #d8dde5;
+  font-size: 13px;
+}
+
+.sideStatsPanel {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.funnelGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.actionSummaryPanel p {
+  color: #9ba3ad;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.actionNarrative {
+  margin-top: 12px;
+  color: #d7dde6;
+  font-size: 13px;
+}
+
+.actionNarrative.subtle {
+  color: #8b94a2;
+}
+
+.historyStandalonePanel {
+  border: 1px solid #2f2f2f;
+  border-radius: 14px;
+  background: #1a1a1a;
+  padding: 16px;
+}
+
+.historyStandaloneHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.historyStandaloneHeader h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.historyStandaloneHeader p {
+  margin: 8px 0 0;
+  color: #9ba3ad;
+  font-size: 13px;
+}
+
+.historyItems.standalone {
+  gap: 10px;
+}
+
+.historyStandaloneRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #303236;
+  background: #151515;
+}
+
 .tableHeaderHint {
   color: #818a96;
   font-size: 12px;
