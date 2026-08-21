@@ -65,7 +65,7 @@ label {
   border-radius: 999px;
   background: rgba(238, 77, 45, 0.14);
   color: #ff835f;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.08em;
   margin-bottom: 18px;
@@ -124,17 +124,17 @@ label {
 .loginButton {
   width: 362px;
   max-width: 100%;
-  margin-top: 12px;
-  height: 46px;
+  margin-top: 10px;
+  height: 40px;
   border-radius: 14px;
   background: rgb(248, 74, 37);
   color: #fff;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .loginFooterNote {
-  margin-top: 10px;
+  margin-top: 18px;
   color: #778296;
   font-size: 11px;
   text-align: center;
@@ -162,18 +162,18 @@ label {
   justify-content: space-between;
   align-items: flex-start;
   gap: 14px;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
 .heroBrand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
 }
 
 .heroLogo {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 10px;
   display: grid;
   place-items: center;
@@ -182,8 +182,8 @@ label {
 }
 
 .heroBrand h1 {
-  margin: 0 0 3px;
-  font-size: 18px;
+  margin: 0 0 2px;
+  font-size: 17px;
   line-height: 1;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -239,13 +239,13 @@ label {
 .workspaceHeading {
   font-size: 14px;
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .workspaceSubheading {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   color: #676f7c;
-  font-size: 11px;
+  font-size: 10.5px;
 }
 
 .workspacePanel,
@@ -265,8 +265,8 @@ label {
   grid-template-columns: 22px 1fr auto;
   align-items: center;
   gap: 10px;
-  min-height: 42px;
-  padding: 0 12px;
+  min-height: 40px;
+  padding: 0 11px;
   border-bottom: 1px solid #2d3138;
 }
 
@@ -322,8 +322,8 @@ label {
 .historyRow {
   display: grid;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 7px;
+  padding: 7px 9px;
   border-radius: 8px;
   border: 1px solid #383c43;
   background: #242426;
@@ -403,15 +403,15 @@ label {
 
 .notesPanel,
 .historyPanel {
-  margin-top: 12px;
-  padding: 14px;
+  margin-top: 10px;
+  padding: 12px;
 }
 
 .notesPanel p {
   margin: 0;
   color: #c3cad4;
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: 10.5px;
+  line-height: 1.55;
 }
 
 .notesPanel p + p {
@@ -431,7 +431,7 @@ label {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .historyPanelHeader h3 {
@@ -441,9 +441,9 @@ label {
 }
 
 .historyPanelHeader p {
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   color: #9aa2af;
-  font-size: 11px;
+  font-size: 10.5px;
   line-height: 1.5;
   max-width: 470px;
 }
