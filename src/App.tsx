@@ -1519,7 +1519,16 @@ export default function App() {
   const [error, setError] = useState('')
   const [guideOpen, setGuideOpen] = useState(false)
   const [guideStep, setGuideStep] = useState<GuideStepId>('persiapan')
-  const [analysis, setAnalysis] = useState<Analysis | null>(null)
+  const [analysis, setAnalysis] = useState<Analysis | null>(() => {
+    if (SAMPLE_MODE) {
+      try {
+        return analyze(SAMPLE_META_CSV, SAMPLE_SHOPEE_CSV, 0.11)
+      } catch {
+        return null
+      }
+    }
+    return null
+  })
 
   async function refreshHistory(currentEmail = email) { if (!currentEmail) return; setRuns(await listRuns(currentEmail)) }
   useEffect(() => { const savedEmail = window.localStorage.getItem('afftometa_email') || ''; if (savedEmail) { setEmail(savedEmail); setEmailInput(savedEmail); void refreshHistory(savedEmail) } }, [])
