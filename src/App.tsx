@@ -83,12 +83,11 @@ export default function App() {
   async function handleAnalyze() {
     try {
       if (SAMPLE_MODE && !workspace.metaFile) {
-        const [metaText, shopeeText] = await Promise.all([
-          fetch('/sample/meta.csv').then((r) => r.text()),
-          fetch('/sample/shopee.csv').then((r) => r.text()),
-        ])
+        const metaText = await fetch('/sample/meta.csv').then((r) => r.text())
+        const shopeeText = await fetch('/sample/shopee.csv').then((r) => r.text())
         const result = analyze(metaText, shopeeText, 0.11)
-        setAnalysis(result)
+        ;(window as any).__aff_result = result
+        setAnalysis({ ...result })
         return
       }
       if (!workspace.metaFile) throw new Error('Upload Meta CSV dulu.')
