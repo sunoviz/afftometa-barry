@@ -236,6 +236,10 @@ label {
   display: none;
 }
 
+.workspacePanel {
+  overflow: hidden;
+}
+
 .workspaceHeading {
   font-size: 14px;
   font-weight: 800;
@@ -397,8 +401,8 @@ label {
 }
 
 .workspaceActionStub {
-  margin-top: 12px;
-  height: 36px;
+  margin-top: 10px;
+  height: 34px;
 }
 
 .notesPanel,
