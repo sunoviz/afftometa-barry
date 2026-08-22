@@ -691,10 +691,8 @@ export default function App() {
           <div className="loginEyebrow">PRIVATE MEMBER AREA</div>
           <h1>{APP_NAME}</h1>
           <p>Masukkan email yang sudah di-whitelist buat akses dashboard tracking Shopee Affiliate × Meta Ads dan history campaign.</p>
-          <label className="loginLabel">Email akses</label>
           <input value={emailInput} onChange={(event) => setEmailInput(event.target.value)} placeholder="emailkamu@gmail.com" onKeyDown={(event) => { if (event.key === 'Enter') void handleLogin() }} />
           <button type="button" className="loginButton" onClick={() => void handleLogin()}>Masuk Dashboard</button>
-          <div className="loginFooterNote">Private tools untuk circle terdekat.</div>
           {error ? <p className="errorText">{error}</p> : null}
         </section>
       </main>

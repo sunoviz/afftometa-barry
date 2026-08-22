@@ -100,7 +100,8 @@ label {
   width: 348px;
   max-width: 100%;
   height: 46px;
-  padding: 0 10px;
+  margin-top: 20px;
+  padding: 0 12px;
   border-radius: 14px;
   border: 1px solid rgb(255, 33, 0);
   background: rgb(9, 11, 16);
@@ -122,14 +123,14 @@ label {
 }
 
 .loginButton {
-  width: 362px;
+  width: 348px;
   max-width: 100%;
-  margin-top: 10px;
-  height: 40px;
+  margin-top: 12px;
+  height: 46px;
   border-radius: 14px;
   background: rgb(248, 74, 37);
   color: #fff;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 800;
 }
 
