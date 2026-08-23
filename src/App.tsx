@@ -750,6 +750,17 @@ export default function App() {
     await refreshHistory(normalized)
   }
 
+  function openRun(run: SavedRun) {
+    if (!run.analysis) {
+      setError('Snapshot history ini belum punya data analisa.')
+      return
+    }
+    setError('')
+    setActiveRun(run)
+    setAnalysis(run.analysis)
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+
   async function handleAnalyze() {
     try {
       if (!workspace.metaFile) throw new Error('Upload Meta CSV dulu.')
@@ -799,7 +810,7 @@ export default function App() {
   }
 
   if (analysis) {
-    return <ResultScreen analysis={analysis} onBack={() => { setAnalysis(null); setActiveRun(null) }} run={activeRun} runs={runs} onOpenRun={(saved) => { setActiveRun(saved); setAnalysis(saved.analysis) }} onRefreshHistory={() => void refreshHistory(email)} />
+    return <ResultScreen analysis={analysis} onBack={() => { setAnalysis(null); setActiveRun(null) }} run={activeRun} runs={runs} onOpenRun={openRun} onRefreshHistory={() => void refreshHistory(email)} />
   }
 
   return (
@@ -885,12 +896,12 @@ export default function App() {
             <div className="historyItems">
               {runs.length === 0 ? <p className="historyEmpty">Belum ada history tersimpan untuk {email}.</p> : null}
               {runs.map((run) => (
-                <div className="historyRow" key={run.id}>
+                <div className="historyRow" key={run.id} onClick={() => openRun(run)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter') openRun(run) }}>
                   <div>
                     <div className="historyDateLine">{formatHistoryHeadline(run.createdAt)}</div>
                     <div className="historyMetaLine">1 upload tersimpan · Meta {run.metaFile || '—'} · Shopee {run.shopeeFile || '—'} · update {new Date(run.createdAt).toLocaleString('sv-SE').replace('T', ' ')}</div>
                   </div>
-                  <button type="button" className="outlineButton" onClick={() => { setActiveRun(run); setAnalysis(run.analysis) }}>Buka</button>
+                  <button type="button" className="outlineButton" onClick={(event) => { event.stopPropagation(); openRun(run) }}>Buka</button>
                 </div>
               ))}
             </div>
