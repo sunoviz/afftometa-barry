@@ -3,9 +3,11 @@ import {
   BarChart3,
   Calendar,
   ChevronDown,
+  Coffee,
   Download,
   FileSpreadsheet,
   Filter,
+  Heart,
   HelpCircle,
   LayoutDashboard,
   Menu,
@@ -37,6 +39,14 @@ const APP_SUBTITLE = 'Shopee × Meta Ads History Tracker'
 const FOOTER_TEXT = '© 2026 Satruk Affiliate Tracker — private server build'
 const fmt = new Intl.NumberFormat('id-ID')
 const rp = (n: number) => `Rp ${fmt.format(Math.round(n || 0))}`
+const compactRp = (n: number, signed = false) => {
+  const value = Math.round(n || 0)
+  const sign = signed && value > 0 ? '+ ' : value < 0 ? '- ' : ''
+  const abs = Math.abs(value)
+  if (abs >= 1_000_000) return `${sign}Rp ${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}jt`
+  if (abs >= 1_000) return `${sign}Rp ${Math.round(abs / 1_000)}rb`
+  return `${sign}Rp ${fmt.format(abs)}`
+}
 const readText = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -221,26 +231,29 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
   const [ppn, setPpn] = useState(0)
   const [targetPerDay, setTargetPerDay] = useState('500.000')
   const [historyMode, setHistoryMode] = useState<'Semua' | 'Terbaru'>('Semua')
+  const [sourceFilter, setSourceFilter] = useState('Semua')
 
+  const sourceShopee = useMemo(() => sourceFilter === 'Semua' ? analysis.shopee : analysis.shopee.filter((row: any) => String(row.platform || 'Others') === sourceFilter), [analysis.shopee, sourceFilter])
   const totals = useMemo(() => {
     const spend = analysis.totals.spend || 0
-    const commission = analysis.totals.commission || 0
+    const commission = sourceShopee.reduce((sum: number, item: any) => sum + Number(item.commission || 0), 0)
+    const orderIds = new Set(sourceShopee.map((item: any) => item.orderId).filter(Boolean))
     const spendPpn = spend * (1 + ppn)
     const net = commission - spendPpn
     const roas = spendPpn > 0 ? commission / spendPpn : 0
     const roi = spendPpn > 0 ? net / spendPpn : 0
     const clicks = analysis.totals.clicks || 0
     const lpViews = analysis.totals.lpViews || 0
-    const orders = analysis.totals.orders || 0
-    const zeroItems = analysis.shopee.filter((item: any) => Number(item.commission || 0) <= 0).length
-    const totalItems = analysis.shopee.length || 1
+    const orders = orderIds.size || sourceShopee.length
+    const zeroItems = sourceShopee.filter((item: any) => Number(item.commission || 0) <= 0).length
+    const totalItems = sourceShopee.length || 1
     const zeroPct = (zeroItems / totalItems) * 100
     const commissionPerOrder = orders > 0 ? commission / orders : 0
     const cpc = clicks > 0 ? spendPpn / clicks : 0
     const lpRate = clicks > 0 ? (lpViews / clicks) * 100 : 0
     const targetRaw = Number(targetPerDay.replace(/\./g, '')) || 0
     return { spendPpn, commission, net, roas, roi, clicks, lpViews, orders, zeroItems, totalItems, zeroPct, commissionPerOrder, cpc, lpRate, targetRaw }
-  }, [analysis, ppn, targetPerDay])
+  }, [analysis, ppn, targetPerDay, sourceShopee])
 
   const dailyRows = useMemo(() => analysis.daily.map((row: any) => {
     const spend = Number(row.spend || 0)
@@ -256,7 +269,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
   }), [analysis.daily, ppn])
 
   const current = dailyRows[dailyRows.length - 1] || null
-  const platformCounts = useMemo(() => {
+  const allPlatformCounts = useMemo(() => {
     const map = new Map<string, number>()
     for (const order of analysis.shopee as any[]) {
       const platform = String(order.platform || 'Others').trim() || 'Others'
@@ -264,9 +277,17 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
     }
     return [...map.entries()].sort((a, b) => b[1] - a[1])
   }, [analysis.shopee])
+  const platformCounts = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const order of sourceShopee as any[]) {
+      const platform = String(order.platform || 'Others').trim() || 'Others'
+      map.set(platform, (map.get(platform) || 0) + 1)
+    }
+    return [...map.entries()].sort((a, b) => b[1] - a[1])
+  }, [sourceShopee])
   const categoryRows = useMemo(() => {
     const map = new Map<string, { category: string; commission: number; items: number }>()
-    for (const row of analysis.shopee as any[]) {
+    for (const row of sourceShopee as any[]) {
       const category = String((row.product || 'Tanpa kategori')).split(',')[0].trim() || 'Tanpa kategori'
       const current = map.get(category) || { category, commission: 0, items: 0 }
       current.commission += Number(row.commission || 0)
@@ -274,7 +295,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
       map.set(category, current)
     }
     return [...map.values()].sort((a, b) => b.commission - a.commission)
-  }, [analysis.shopee])
+  }, [sourceShopee])
   const productRows = useMemo(() => {
     const map = new Map<string, { product: string; category: string; commission: number; items: number }>()
     for (const row of analysis.shopee as any[]) {
@@ -300,7 +321,9 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
   const scaleCount = matchedTags.filter((item: any) => item.recommendation.includes('SCALE')).length
   const tahanCount = matchedTags.filter((item: any) => item.recommendation.includes('TAHAN')).length
 
-  const trafficLabel = `${analysis.shopee.length} / ${analysis.shopee.length} orders (100%)`
+  const trafficLabel = `${sourceShopee.length} / ${analysis.shopee.length} orders (${analysis.shopee.length ? Math.round((sourceShopee.length / analysis.shopee.length) * 100) : 0}%)`
+  const targetPct = totals.targetRaw > 0 ? Math.max(0, Math.round((totals.net / totals.targetRaw) * 100)) : 0
+  const targetPctCapped = Math.min(100, targetPct)
   const charts = current ? [
     { label: 'Spend', value: current.spendPpn, tone: 'gray' },
     { label: 'Komisi', value: current.commission, tone: 'orange' },
@@ -328,6 +351,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
             <button type="button" className={tab === 'history' ? 'sidebarLink active' : 'sidebarLink'} onClick={() => setTab('history')}><Calendar size={15} />History</button>
           </nav>
           <div className="sidebarActions">
+            <button type="button" className="coffeeButton"><Heart size={13} />Traktir kopi developer <Coffee size={13} /></button>
             <button type="button" className="sidebarAction"><Download size={15} />Export Excel</button>
             <button type="button" className="sidebarAction" onClick={onBack}><Upload size={15} />Ganti file</button>
           </div>
@@ -344,9 +368,9 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
 
           <div className="toolbarRow">
             <div className="datePillGroup">
-              <label className="datePill"><Calendar size={14} /><input value={current?.date || ''} readOnly /></label>
+              <label className="datePill"><input type="date" value={current?.date || ''} readOnly /></label>
               <span className="dateSep">s/d</span>
-              <label className="datePill"><Calendar size={14} /><input value={current?.date || ''} readOnly /></label>
+              <label className="datePill"><input type="date" value={current?.date || ''} readOnly /></label>
             </div>
             <div className="toolbarButtons">
               <button type="button" className={historyMode === 'Semua' ? 'pillButton active' : 'pillButton'} onClick={() => setHistoryMode('Semua')}>Semua</button>
@@ -397,11 +421,11 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
                 <div className="trafficPanelHeader"><Filter size={14} />FILTER SUMBER TRAFIK</div>
                 <div className="trafficPanelBody">
                   <div className="trafficFilters">
-                    <button type="button" className="sourceChip active">Semua</button>
-                    {platformCounts[0] ? <button type="button" className="sourceChip">{platformCounts[0][0]}</button> : null}
+                    <button type="button" className={sourceFilter === 'Semua' ? 'sourceChip active' : 'sourceChip'} onClick={() => setSourceFilter('Semua')}>Semua</button>
+                    {allPlatformCounts[0] ? <button type="button" className={sourceFilter === allPlatformCounts[0][0] ? 'sourceChip active' : 'sourceChip'} onClick={() => setSourceFilter(allPlatformCounts[0][0])}>{allPlatformCounts[0][0]}</button> : null}
                   </div>
                   <div className="trafficSummary">{trafficLabel}</div>
-                  <div className="platformRow"><span>Per platform:</span>{platformCounts.map(([name, count]) => <button key={name} type="button" className="platformChip">{name} <strong>{count}</strong></button>)}</div>
+                  <div className="platformRow"><span>Per platform:</span>{allPlatformCounts.map(([name, count]) => <button key={name} type="button" className={sourceFilter === name ? 'platformChip active' : 'platformChip'} onClick={() => setSourceFilter(name)}>{name} <strong>{count}</strong></button>)}</div>
                 </div>
               </div>
 
@@ -410,8 +434,9 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
 
               {current ? (
                 <div className="summaryStrip">
-                  <div className="summaryHeadline">{current.date} · Net {rp(current.net)} / target {rp(totals.targetRaw)}</div>
-                  <div className="summaryProgress">{totals.targetRaw > 0 ? `${Math.max(0, Math.round((current.net / totals.targetRaw) * 100))}%` : '0%'}</div>
+                  <div className="summaryHeadline">{current.date} · Net {rp(totals.net)} / target {rp(totals.targetRaw)}</div>
+                  <div className={targetPct >= 100 ? 'summaryProgress positive' : 'summaryProgress'}>{targetPct}%</div>
+                  <div className="targetProgressTrack"><div className={targetPct >= 100 ? 'targetProgressBar positive' : 'targetProgressBar'} style={{ width: `${targetPctCapped}%` }} /></div>
                   <div className="summaryMeta">
                     <span>Spend: <strong>{rp(current.spendPpn)}</strong></span>
                     <span>Komisi: <strong>{rp(current.commission)}</strong></span>
@@ -423,11 +448,11 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
               ) : null}
 
               <div className="statsGrid">
-                <StatCard label="Spend + PPN" value={rp(totals.spendPpn)} hint="Biaya iklan Meta" />
-                <StatCard label="Total Komisi" value={rp(totals.commission)} />
-                <StatCard label="Net Profit" value={rp(totals.net)} danger={totals.net < 0} />
-                <StatCard label="ROAS" value={`${totals.roas.toFixed(2)}x`} />
-                <StatCard label="ROI" value={`${(totals.roi * 100).toFixed(1)}%`} hint="(Komisi−Spend)/Spend" danger={totals.roi < 0} />
+                <StatCard label="Spend + PPN" value={compactRp(totals.spendPpn)} hint="Biaya iklan Meta" />
+                <StatCard label="Total Komisi" value={compactRp(totals.commission)} accent />
+                <StatCard label="Net Profit" value={compactRp(totals.net, true)} danger={totals.net < 0} accent={totals.net >= 0} />
+                <StatCard label="ROAS" value={`${totals.roas.toFixed(2)}x`} accent />
+                <StatCard label="ROI" value={`${(totals.roi * 100).toFixed(1)}%`} hint="(Komisi−Spend)/Spend" danger={totals.roi < 0} accent={totals.roi >= 0} />
                 <StatCard label="Meta Clicks" value={fmt.format(totals.clicks)} hint={`CPC: ${rp(totals.cpc)}`} />
                 <StatCard label="LP Views (Meta)" value={fmt.format(totals.lpViews)} hint={`LP rate: ${totals.lpRate.toFixed(1)}%`} />
                 <StatCard label="Unique Orders" value={fmt.format(totals.orders)} hint={`Komisi/order: ${rp(totals.commissionPerOrder)}`} />
@@ -440,24 +465,30 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
                     <section className="chartPanel">
                       <h3>SPEND VS KOMISI</h3>
                       <div className="chartLegend"><span><i className="legend legendGray" />Spend</span><span><i className="legend legendOrange" />Komisi</span></div>
-                      <div className="barChartArea">
-                        {charts.map((item) => (
-                          <div key={item.label} className="barColumn">
-                            <div className={`bar bar-${item.tone}`} style={{ height: `${Math.max(18, (item.value / maxSpendCommission) * 160)}px` }} />
-                            <div className="barLabel">{current?.date?.slice(5) || '—'}</div>
-                          </div>
-                        ))}
+                      <div className="axisChartShell">
+                        <div className="yAxisLabels"><span>{compactRp(maxSpendCommission)}</span><span>{compactRp(maxSpendCommission * 0.66)}</span><span>{compactRp(maxSpendCommission * 0.33)}</span><span>Rp0</span></div>
+                        <div className="barChartArea">
+                          {charts.map((item) => (
+                            <div key={item.label} className="barColumn">
+                              <div className={`bar bar-${item.tone}`} style={{ height: `${Math.max(18, (item.value / maxSpendCommission) * 160)}px` }} />
+                              <div className="barLabel">{current?.date?.slice(5) || '—'}</div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </section>
                     <section className="chartPanel">
                       <h3>NET PROFIT HARIAN</h3>
-                      <div className="netChartArea">
-                        {dailyRows.map((row: any) => (
-                          <div key={row.date} className="netColumn">
-                            <div className={`netBar ${row.net < 0 ? 'negative' : 'positive'}`} style={{ height: `${Math.max(18, (Math.abs(row.net) / maxNet) * 170)}px` }} />
-                            <div className="barLabel">{row.date.slice(5)}</div>
-                          </div>
-                        ))}
+                      <div className="axisChartShell">
+                        <div className="yAxisLabels"><span>{compactRp(maxNet)}</span><span>{compactRp(maxNet * 0.66)}</span><span>{compactRp(maxNet * 0.33)}</span><span>Rp0</span></div>
+                        <div className="netChartArea">
+                          {dailyRows.map((row: any) => (
+                            <div key={row.date} className="netColumn">
+                              <div className={`netBar ${row.net < 0 ? 'negative' : 'positive'}`} style={{ height: `${Math.max(18, (Math.abs(row.net) / maxNet) * 170)}px` }} />
+                              <div className="barLabel">{row.date.slice(5)}</div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </section>
                   </div>

@@ -562,7 +562,21 @@ label {
   padding: 8px 8px 0;
   border-top: 1px solid #2a2a2a;
   display: grid;
-  gap: 2px;
+  gap: 6px;
+}
+
+.coffeeButton {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  border: 1px solid #8b3e2b;
+  background: #21120f;
+  color: #ff764f;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .dashboardMain {
@@ -617,10 +631,11 @@ label {
 }
 
 .datePill input {
-  width: 78px;
+  width: 128px;
   border: 0;
   background: transparent;
   color: inherit;
+  color-scheme: dark;
 }
 
 .datePill input:focus {
@@ -758,6 +773,7 @@ label {
   font-size: 12px;
 }
 
+.platformChip.active,
 .sourceChip.active {
   color: #ff744f;
   border-color: #7e3423;
@@ -814,6 +830,28 @@ label {
   color: #ff7d71;
   font-size: 18px;
   font-weight: 800;
+}
+
+.summaryProgress.positive {
+  color: #4fd47f;
+}
+
+.targetProgressTrack {
+  height: 10px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: #242424;
+  overflow: hidden;
+}
+
+.targetProgressBar {
+  height: 100%;
+  border-radius: inherit;
+  background: #b35d5d;
+}
+
+.targetProgressBar.positive {
+  background: #45d475;
 }
 
 .summaryMeta {
@@ -927,6 +965,26 @@ label {
   align-items: flex-end;
   gap: 14px;
   padding: 10px 6px 6px;
+  background-image: linear-gradient(to top, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 100% 38px;
+}
+
+.axisChartShell {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 8px;
+  align-items: stretch;
+  margin-top: 6px;
+}
+
+.yAxisLabels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #747d89;
+  font-size: 10px;
+  padding: 6px 0 20px;
+  text-align: right;
 }
 
 .barColumn,
