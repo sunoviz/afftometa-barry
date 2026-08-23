@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 import { analyze, type Analysis } from './lib/parser'
 import { listRuns, saveRun, type SavedRun } from './lib/history'
+import sampleMetaCsv from '../public/sample/meta.csv?raw'
+import sampleShopeeCsv from '../public/sample/shopee.csv?raw'
 import './App.css'
 
 type GuideStepId = 'persiapan' | 'meta' | 'shopee' | 'dashboard' | 'atribusi'
@@ -195,6 +197,19 @@ function makeWorkspace(): WorkspaceState {
   }
 }
 
+function makeReferenceRun(email: string): SavedRun {
+  return {
+    id: 0,
+    email,
+    name: 'Kemarin',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    metaFile: '19 rows',
+    shopeeFile: '726 rows',
+    ppn: 0,
+    analysis: analyze(sampleMetaCsv, sampleShopeeCsv, 0),
+  }
+}
+
 function formatHistoryHeadline(createdAt: string) {
   const created = new Date(createdAt)
   const today = new Date()
@@ -255,18 +270,34 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
     return { spendPpn, commission, net, roas, roi, clicks, lpViews, orders, zeroItems, totalItems, zeroPct, commissionPerOrder, cpc, lpRate, targetRaw }
   }, [analysis, ppn, targetPerDay, sourceShopee])
 
-  const dailyRows = useMemo(() => analysis.daily.map((row: any) => {
-    const spend = Number(row.spend || 0)
-    const commission = Number(row.commission || 0)
-    const spendPpn = spend * (1 + ppn)
-    const net = commission - spendPpn
-    const roas = spendPpn > 0 ? commission / spendPpn : 0
-    const roi = spendPpn > 0 ? net / spendPpn : 0
-    const epc = row.clicks > 0 ? commission / row.clicks : 0
-    const lpRate = row.clicks > 0 ? (row.lpViews / row.clicks) * 100 : 0
-    const zeroPct = row.itemCount > 0 ? ((row.zeroCommissionCount || 0) / row.itemCount) * 100 : 0
-    return { ...row, spendPpn, net, roas, roi, epc, lpRate, zeroPct }
-  }), [analysis.daily, ppn])
+  const dailyRows = useMemo(() => {
+    const shopeeByDate = new Map<string, { commission: number; orderIds: Set<string>; itemCount: number; zeroCommissionCount: number }>()
+    for (const item of sourceShopee as any[]) {
+      const date = item.orderDate || item.clickDate || '—'
+      const current = shopeeByDate.get(date) || { commission: 0, orderIds: new Set<string>(), itemCount: 0, zeroCommissionCount: 0 }
+      current.commission += Number(item.commission || 0)
+      if (item.orderId) current.orderIds.add(String(item.orderId))
+      current.itemCount += 1
+      if (Number(item.commission || 0) <= 0) current.zeroCommissionCount += 1
+      shopeeByDate.set(date, current)
+    }
+    return analysis.daily.map((row: any) => {
+      const spend = Number(row.spend || 0)
+      const source = shopeeByDate.get(row.date)
+      const commission = source?.commission || 0
+      const orders = source?.orderIds.size || 0
+      const itemCount = source?.itemCount || 0
+      const zeroCommissionCount = source?.zeroCommissionCount || 0
+      const spendPpn = spend * (1 + ppn)
+      const net = commission - spendPpn
+      const roas = spendPpn > 0 ? commission / spendPpn : 0
+      const roi = spendPpn > 0 ? net / spendPpn : 0
+      const epc = row.clicks > 0 ? commission / row.clicks : 0
+      const lpRate = row.clicks > 0 ? (row.lpViews / row.clicks) * 100 : 0
+      const zeroPct = itemCount > 0 ? (zeroCommissionCount / itemCount) * 100 : 0
+      return { ...row, commission, orders, itemCount, zeroCommissionCount, spendPpn, net, roas, roi, epc, lpRate, zeroPct }
+    })
+  }, [analysis.daily, ppn, sourceShopee])
 
   const current = dailyRows[dailyRows.length - 1] || null
   const allPlatformCounts = useMemo(() => {
@@ -308,18 +339,40 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
     }
     return [...map.values()].sort((a, b) => b.commission - a.commission).slice(0, 15)
   }, [sourceShopee])
-  const matchedTags = useMemo(() => analysis.tags.map((tag: any) => {
-    const status = tag.roas >= 1 ? '🟢 SCALE' : '🟡 TAHAN'
-    return {
-      ...tag,
-      recommendation: status,
-      avgOrder: tag.orders ? tag.commission / tag.orders : 0,
-      realRate: tag.clickCount ? (tag.orders / tag.clickCount) * 100 : null,
-      realCpc: tag.orders ? tag.spend / tag.orders : null,
+  const matchedTags = useMemo(() => {
+    const sourceTags = new Map<string, { tag: string; commission: number; orders: number; purchase: number }>()
+    for (const row of sourceShopee as any[]) {
+      const tag = row.tag || '(no tag)'
+      const current = sourceTags.get(tag) || { tag, commission: 0, orders: 0, purchase: 0 }
+      current.commission += Number(row.commission || 0)
+      current.purchase += Number(row.purchase || 0)
+      current.orders += 1
+      sourceTags.set(tag, current)
     }
-  }), [analysis.tags])
+    return [...sourceTags.values()].map((tag: any) => {
+      const base = analysis.tags.find((item: any) => item.tag === tag.tag) || tag
+      const spend = Number(base.spend || 0)
+      const net = tag.commission - spend * (1 + ppn)
+      const roas = spend > 0 ? tag.commission / (spend * (1 + ppn)) : 0
+      const roi = spend > 0 ? net / (spend * (1 + ppn)) : 0
+      const status = roas >= 1.2 ? '🟢 SCALE' : roas < 0.5 && spend > 0 ? '🔴 KILL' : '🟡 TAHAN'
+      return {
+        ...base,
+        ...tag,
+        spend,
+        net,
+        roas,
+        roi,
+        recommendation: status,
+        avgOrder: tag.orders ? tag.commission / tag.orders : 0,
+        realRate: base.clickCount ? (tag.orders / base.clickCount) * 100 : null,
+        realCpc: tag.orders ? spend / tag.orders : null,
+      }
+    }).sort((a: any, b: any) => b.commission - a.commission)
+  }, [analysis.tags, ppn, sourceShopee])
   const scaleCount = matchedTags.filter((item: any) => item.recommendation.includes('SCALE')).length
   const tahanCount = matchedTags.filter((item: any) => item.recommendation.includes('TAHAN')).length
+  const killCount = matchedTags.filter((item: any) => item.recommendation.includes('KILL')).length
 
   const trafficLabel = `${sourceShopee.length} / ${analysis.shopee.length} orders (${analysis.shopee.length ? Math.round((sourceShopee.length / analysis.shopee.length) * 100) : 0}%)`
   const targetPct = totals.targetRaw > 0 ? Math.max(0, Math.round((totals.net / totals.targetRaw) * 100)) : 0
@@ -643,7 +696,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                   <section className="resultTablePanel dashboardTablePanel actionSummaryPanel">
                     <h3>RANGKUMAN AKSI BERDASARKAN DATA DI ATAS</h3>
                     <p>Ringkasan ini mengikuti rekomendasi per tag/campaign yang sedang tampil setelah filter tanggal/akun/platform.</p>
-                    <div className="actionCounts"><MetricBadge label="SCALE — bisa dinaikkan bertahap" value={String(scaleCount)} /><MetricBadge label="TAHAN — tunggu/test kecil" value={String(tahanCount)} /><MetricBadge label="KILL — stop spend" value={'0'} /></div>
+                    <div className="actionCounts"><MetricBadge label="SCALE — bisa dinaikkan bertahap" value={String(scaleCount)} /><MetricBadge label="TAHAN — tunggu/test kecil" value={String(tahanCount)} /><MetricBadge label="KILL — stop spend" value={String(killCount)} /></div>
                     <div className="actionNarrative">TAHAN: {tahanCount} tag/campaign jangan discale besar dulu. Lanjut test kecil/tunggu data sampai EPC normal, order, dan Real Rate lebih jelas.</div>
                     <div className="actionNarrative subtle">Real Rate sebagian kosong: beberapa baris belum punya klik Shopee. Keputusan baris itu masih pakai proxy Meta + komisi.</div>
                   </section>
@@ -672,7 +725,8 @@ export default function App() {
 
   async function refreshHistory(currentEmail = email) {
     if (!currentEmail) return
-    setRuns(await listRuns(currentEmail))
+    const storedRuns = await listRuns(currentEmail)
+    setRuns(storedRuns.length ? storedRuns : [makeReferenceRun(currentEmail)])
   }
 
   useEffect(() => {
