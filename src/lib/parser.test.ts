@@ -1,6 +1,6 @@
 
 import { describe, expect, it } from 'vitest'
-import { analyze, parseIdr, parseMetaCsv } from './parser'
+import { analyze, parseClickCsv, parseIdr, parseMetaCsv } from './parser'
 
 const metaBarry = `"Reporting starts","Reporting ends","Campaign name","Campaign delivery","Amount spent (IDR)",Impressions,"Link clicks","Landing page views"
 2026-08-02,2026-08-02,,0,314467,93675,,
@@ -12,6 +12,11 @@ const metaBarry = `"Reporting starts","Reporting ends","Campaign name","Campaign
 const shopeeBarry = `ID Pemesanan,Status Pesanan,Waktu Pemesanan,Waktu Klik,Nama Barange,Nilai Pembelian(Rp),Komisi Bersih Affiliate (Rp),Tag_link1,Platform
 260803BA4WYXED,Tertunda,2026-08-02 23:54:21,2026-08-02 21:33:02,Produk A,22824,1711.8,manurung,Facebook
 260803B9F6SXBW,Tertunda,2026-08-02 23:42:13,2026-08-02 17:29:21,Produk B,13999,769.945,manurung,Facebook`
+const metaIndonesianActions = `Awal pelaporan,Akhir pelaporan,Nama kampanye,Penayangan kampanye,Hasil,Indikator Hasil,Jumlah yang dibelanjakan (IDR),Impresi,Klik Tautan Unik
+2026-08-19,2026-08-19,manurung,active,2846,actions:link_click,82353,19116,2788`
+const clickReport = `Klik ID,Waktu Klik,Wilayah Klik,Tag_link,Perujuk
+abc,2026-08-19 23:59:39,Indonesia,manurung----,Facebook
+xyz,2026-08-19 22:00:00,Indonesia,newmanurung----,Facebook`
 
 describe('parser', () => {
   it('parses IDR formats robustly', () => {
@@ -37,5 +42,15 @@ describe('parser', () => {
     expect(result.tags[0].tag).toBe('manurung')
     expect(result.tags[0].campaign).toBe('manurung')
     expect(result.tags[0].matchScore).toBe(100)
+  })
+  it('parses Indonesian Meta action exports and Shopee click reports', () => {
+    const meta = parseMetaCsv(metaIndonesianActions)
+    expect(meta.rows[0].clicks).toBe(2788)
+    const clicks = parseClickCsv(clickReport)
+    expect(clicks.rows.map(r => r.tag)).toEqual(['manurung', 'newmanurung'])
+    const result = analyze(metaIndonesianActions, shopeeBarry, 0, clickReport)
+    expect(result.totals.clicks).toBe(2788)
+    expect(result.clicks).toHaveLength(2)
+    expect(result.tags.find(t => t.tag === 'manurung')?.clickCount).toBe(1)
   })
 })

@@ -3,12 +3,13 @@ import Papa from 'papaparse'
 
 export type MetaRow = { date: string; campaign: string; spend: number; clicks: number; lpViews: number; impressions: number }
 export type ShopeeRow = { orderId: string; status: string; orderDate: string; clickDate: string; product: string; purchase: number; commission: number; tag: string; platform: string }
+export type ClickRow = { clickId: string; clickDate: string; tag: string; referrer: string }
 export type QualityReport = {
   metaRows: number; metaRowsUsed: number; metaSummaryRowsSkipped: number; metaZeroRowsSkipped: number;
   shopeeRows: number; shopeeRowsUsed: number; warnings: string[]; metaSpendRaw: number; metaSpendUsed: number; shopeeCommission: number;
 }
 export type Analysis = {
-  meta: MetaRow[]; shopee: ShopeeRow[]; quality: QualityReport; daily: any[]; campaigns: any[]; tags: any[]; totals: any;
+  meta: MetaRow[]; shopee: ShopeeRow[]; clicks: ClickRow[]; quality: QualityReport; daily: any[]; campaigns: any[]; tags: any[]; totals: any;
 }
 
 const norm = (s: string) => String(s || '').trim()
@@ -60,6 +61,22 @@ function parseCsv(text: string) {
   return Papa.parse<Record<string, any>>(text.trim(), { header: true, skipEmptyLines: true, transformHeader: h => h.trim() })
 }
 
+function metaClicks(row: Record<string, any>) {
+  const direct = parseIdr(col(row, 'Link clicks', 'Klik tautan', 'Klik Tautan', 'Klik Tautan Unik', 'Klik unik tautan', 'Klik Unik Tautan'))
+  if (direct) return direct
+  const indicator = norm(col(row, 'Indikator Hasil', 'Indikator hasil', 'Result indicator'))
+  if (/link[_\s-]?click/i.test(indicator) || /klik tautan/i.test(indicator)) return parseIdr(col(row, 'Hasil', 'Results'))
+  return 0
+}
+
+function metaLpViews(row: Record<string, any>) {
+  const direct = parseIdr(col(row, 'Landing page views', 'Tampilan halaman landing', 'Tayangan Halaman Landas', 'Tampilan Halaman Landing'))
+  if (direct) return direct
+  const indicator = norm(col(row, 'Indikator Hasil', 'Indikator hasil', 'Result indicator'))
+  if (/landing|halaman/i.test(indicator)) return parseIdr(col(row, 'Hasil', 'Results'))
+  return 0
+}
+
 export function parseMetaCsv(text: string) {
   const parsed = parseCsv(text)
   let summarySkipped = 0, zeroSkipped = 0, rawSpend = 0
@@ -71,8 +88,8 @@ export function parseMetaCsv(text: string) {
       date: norm(col(row, 'Reporting starts', 'Awal pelaporan', 'Laporan mulai')).slice(0, 10),
       campaign,
       spend,
-      clicks: parseIdr(col(row, 'Link clicks', 'Klik tautan', 'Klik Tautan', 'Results')),
-      lpViews: parseIdr(col(row, 'Landing page views', 'Tampilan halaman landing', 'Tayangan Halaman Landas')),
+      clicks: metaClicks(row),
+      lpViews: metaLpViews(row),
       impressions: parseIdr(col(row, 'Impressions', 'Tayangan', 'Impresi')),
     }
   }).filter(r => {
@@ -102,6 +119,18 @@ export function parseShopeeCsv(text: string) {
   return { rows, stats: { totalRows: parsed.data.length, usedRows: rows.length, errors: parsed.errors } }
 }
 
+export function parseClickCsv(text = '') {
+  if (!text.trim()) return { rows: [] as ClickRow[], stats: { totalRows: 0, usedRows: 0, errors: [] as any[] } }
+  const parsed = parseCsv(text)
+  const rows = (parsed.data || []).map(row => ({
+    clickId: norm(col(row, 'Klik ID', 'Click ID', 'Click id')),
+    clickDate: norm(col(row, 'Waktu Klik', 'Click Time')).slice(0, 10),
+    tag: norm(col(row, 'Tag_link', 'Tag_link1')).replace(/-+$/g, ''),
+    referrer: norm(col(row, 'Perujuk', 'Referrer', 'Referer')) || 'Others',
+  })).filter(r => r.clickId || r.tag)
+  return { rows, stats: { totalRows: parsed.data.length, usedRows: rows.length, errors: parsed.errors } }
+}
+
 const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 function matchCampaignForTag(tag: string, campaigns: MetaRow[]) {
   const kt = key(tag)
@@ -117,11 +146,13 @@ function matchCampaignForTag(tag: string, campaigns: MetaRow[]) {
   return best
 }
 
-export function analyze(metaText: string, shopeeText: string, ppn = 0.11): Analysis {
+export function analyze(metaText: string, shopeeText: string, ppn = 0.11, clickText = ''): Analysis {
   const metaParsed = parseMetaCsv(metaText)
   const shopeeParsed = parseShopeeCsv(shopeeText)
+  const clickParsed = parseClickCsv(clickText)
   const meta = metaParsed.rows
   const shopee = shopeeParsed.rows
+  const clicksReport = clickParsed.rows
   const spend = meta.reduce((a, r) => a + r.spend, 0)
   const spendPpn = spend * (1 + ppn)
   const commission = shopee.reduce((a, r) => a + r.commission, 0)
@@ -137,11 +168,12 @@ export function analyze(metaText: string, shopeeText: string, ppn = 0.11): Analy
   for (const r of meta) { const o = campaignMap.get(r.campaign) || { campaign: r.campaign, spend: 0, clicks: 0, lpViews: 0, impressions: 0 }; o.spend += r.spend; o.clicks += r.clicks; o.lpViews += r.lpViews; o.impressions += r.impressions; campaignMap.set(r.campaign, o) }
   const campaigns = [...campaignMap.values()].sort((a,b)=>b.spend-a.spend).map(r => ({ ...r, cpc: r.clicks ? r.spend/r.clicks : 0, lpRate: r.clicks ? r.lpViews/r.clicks : 0 }))
   const tagMap = new Map<string, any>()
-  for (const s of shopee) { const tag = s.tag || '(no tag)'; const o = tagMap.get(tag) || { tag, commission: 0, orders: 0, purchase: 0, campaign: '', matchScore: 0, matchType: 'unmatched' }; o.commission += s.commission; o.purchase += s.purchase; o.orders += 1; tagMap.set(tag, o) }
+  for (const s of shopee) { const tag = s.tag || '(no tag)'; const o = tagMap.get(tag) || { tag, commission: 0, orders: 0, purchase: 0, clickCount: 0, campaign: '', matchScore: 0, matchType: 'unmatched' }; o.commission += s.commission; o.purchase += s.purchase; o.orders += 1; tagMap.set(tag, o) }
+  for (const c of clicksReport) { const tag = c.tag || '(no tag)'; const o = tagMap.get(tag) || { tag, commission: 0, orders: 0, purchase: 0, clickCount: 0, campaign: '', matchScore: 0, matchType: 'unmatched' }; o.clickCount += 1; tagMap.set(tag, o) }
   const tags = [...tagMap.values()].map(t => { const m = matchCampaignForTag(t.tag, meta); const c = campaignMap.get(m.campaign); const spendTag = c?.spend || 0; return { ...t, campaign: m.campaign, matchScore: m.score, matchType: m.type, spend: spendTag, net: t.commission - spendTag*(1+ppn), roas: spendTag ? t.commission/(spendTag*(1+ppn)) : 0 } }).sort((a,b)=>b.commission-a.commission)
   const warnings = [] as string[]
   if (metaParsed.stats.summarySkipped) warnings.push(`${metaParsed.stats.summarySkipped} row summary Meta diskip biar spend tidak double count.`)
   if (metaParsed.stats.zeroSkipped) warnings.push(`${metaParsed.stats.zeroSkipped} row Meta nol diskip.`)
   const quality = { metaRows: metaParsed.stats.totalRows, metaRowsUsed: metaParsed.stats.usedRows, metaSummaryRowsSkipped: metaParsed.stats.summarySkipped, metaZeroRowsSkipped: metaParsed.stats.zeroSkipped, shopeeRows: shopeeParsed.stats.totalRows, shopeeRowsUsed: shopeeParsed.stats.usedRows, warnings, metaSpendRaw: metaParsed.stats.rawSpend, metaSpendUsed: spend, shopeeCommission: commission }
-  return { meta, shopee, quality, daily, campaigns, tags, totals: { spend, spendPpn, commission, net: commission - spendPpn, roas: spendPpn ? commission/spendPpn : 0, roi: spendPpn ? (commission-spendPpn)/spendPpn : 0, clicks, lpViews, impressions, orders: orderIds.size || shopee.length, ppn } }
+  return { meta, shopee, clicks: clicksReport, quality, daily, campaigns, tags, totals: { spend, spendPpn, commission, net: commission - spendPpn, roas: spendPpn ? commission/spendPpn : 0, roi: spendPpn ? (commission-spendPpn)/spendPpn : 0, clicks, lpViews, impressions, orders: orderIds.size || shopee.length, ppn } }
 }

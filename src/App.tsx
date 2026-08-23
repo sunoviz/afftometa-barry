@@ -772,7 +772,8 @@ export default function App() {
         const lines = text.split(/\r?\n/)
         return index === 0 ? lines.join('\n') : lines.slice(1).join('\n')
       }).join('\n')
-      const result = analyze(metaText, mergedShopee, 0)
+      const clickText = workspace.clickFile ? await readText(workspace.clickFile) : ''
+      const result = analyze(metaText, mergedShopee, 0, clickText)
       setAnalysis(result)
       const savedRun = {
         email,
