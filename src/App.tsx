@@ -226,7 +226,7 @@ function MetricBadge({ label, value, sub }: { label: string; value: string; sub?
   )
 }
 
-function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: Analysis; onBack: () => void; run?: SavedRun | null; runs: SavedRun[]; onOpenRun: (run: SavedRun) => void }) {
+function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory }: { analysis: Analysis; onBack: () => void; run?: SavedRun | null; runs: SavedRun[]; onOpenRun: (run: SavedRun) => void; onRefreshHistory: () => void }) {
   const [tab, setTab] = useState<SidebarTab>('overview')
   const [ppn, setPpn] = useState(0)
   const [targetPerDay, setTargetPerDay] = useState('500.000')
@@ -298,7 +298,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
   }, [sourceShopee])
   const productRows = useMemo(() => {
     const map = new Map<string, { product: string; category: string; commission: number; items: number }>()
-    for (const row of analysis.shopee as any[]) {
+    for (const row of sourceShopee as any[]) {
       const product = String(row.product || 'Produk tanpa nama')
       const category = String(product).split(',')[0].trim() || 'Tanpa kategori'
       const current = map.get(product) || { product, category, commission: 0, items: 0 }
@@ -307,7 +307,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
       map.set(product, current)
     }
     return [...map.values()].sort((a, b) => b.commission - a.commission).slice(0, 15)
-  }, [analysis.shopee])
+  }, [sourceShopee])
   const matchedTags = useMemo(() => analysis.tags.map((tag: any) => {
     const status = tag.roas >= 1 ? '🟢 SCALE' : '🟡 TAHAN'
     return {
@@ -331,6 +331,20 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
   const maxSpendCommission = Math.max(...charts.map((x) => x.value), 1)
   const maxNet = Math.max(...dailyRows.map((x: any) => Math.abs(x.net)), 1)
 
+  const visibleRuns = historyMode === 'Terbaru' ? runs.slice(0, 1) : runs
+
+  function exportDailyCsv() {
+    const header = ['TANGGAL','SPEND','KOMISI','NET','ROAS','ROI','EPC','META CLICKS','LP VIEWS','LP RATE','ORDERS','ZERO%']
+    const rows = dailyRows.map((row: any) => [row.date, Math.round(row.spendPpn), Math.round(row.commission), Math.round(row.net), `${row.roas.toFixed(2)}x`, `${(row.roi * 100).toFixed(1)}%`, Math.round(row.epc), row.clicks || 0, row.lpViews || 0, `${row.lpRate.toFixed(1)}%`, row.orders || 0, `${row.zeroPct.toFixed(1)}%`])
+    const csv = [header, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `afftometa-rekap-${current?.date || 'dashboard'}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <main className="dashboardPage">
       <div className="dashboardLayout">
@@ -352,7 +366,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
           </nav>
           <div className="sidebarActions">
             <button type="button" className="coffeeButton"><Heart size={13} />Traktir kopi developer <Coffee size={13} /></button>
-            <button type="button" className="sidebarAction"><Download size={15} />Export Excel</button>
+            <button type="button" className="sidebarAction" onClick={exportDailyCsv}><Download size={15} />Export Excel</button>
             <button type="button" className="sidebarAction" onClick={onBack}><Upload size={15} />Ganti file</button>
           </div>
         </aside>
@@ -401,10 +415,10 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun }: { analysis: An
                   <h3>History Analisa</h3>
                   <p>Pilih 1 snapshot untuk dibuka. History tidak digabung, jadi periode yang overlap tidak bikin data dobel.</p>
                 </div>
-                <button type="button" className="outlineButton" onClick={() => {}}>Refresh</button>
+                <button type="button" className="outlineButton" onClick={onRefreshHistory}>Refresh</button>
               </div>
               <div className="historyItems standalone">
-                {runs.map((saved) => (
+                {visibleRuns.map((saved) => (
                   <div key={saved.id} className="historyStandaloneRow">
                     <div>
                       <div className="historyDateLine">{formatHistoryHeadline(saved.createdAt)}</div>
@@ -731,7 +745,7 @@ export default function App() {
   }
 
   if (analysis) {
-    return <ResultScreen analysis={analysis} onBack={() => { setAnalysis(null); setActiveRun(null) }} run={activeRun} runs={runs} onOpenRun={(saved) => { setActiveRun(saved); setAnalysis(saved.analysis) }} />
+    return <ResultScreen analysis={analysis} onBack={() => { setAnalysis(null); setActiveRun(null) }} run={activeRun} runs={runs} onOpenRun={(saved) => { setActiveRun(saved); setAnalysis(saved.analysis) }} onRefreshHistory={() => void refreshHistory(email)} />
   }
 
   return (
