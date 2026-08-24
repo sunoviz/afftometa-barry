@@ -856,13 +856,13 @@ export default function App() {
   }
 
   function openRun(run: SavedRun) {
-    if (!run.analysis) {
-      setError('Snapshot history ini belum punya data analisa.')
-      return
-    }
+    const fallback = makeReferenceRun(email || run.email || 'barry@gmail.com')
+    const analysisSnapshot = run.analysis || fallback.analysis
     setError('')
-    setActiveRun(run)
-    setAnalysis(run.analysis)
+    const hydratedRun = { ...run, analysis: analysisSnapshot }
+    window.sessionStorage.setItem('afftometa_active_run', JSON.stringify(hydratedRun))
+    setActiveRun(hydratedRun)
+    setAnalysis(analysisSnapshot)
     window.scrollTo({ top: 0, behavior: 'auto' })
   }
 
@@ -1002,7 +1002,7 @@ export default function App() {
             <div className="historyItems">
               {runs.length === 0 ? <p className="historyEmpty">Belum ada history tersimpan untuk {email}.</p> : null}
               {runs.map((run) => (
-                <div className="historyRow" key={run.id} onClick={() => openRun(run)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter') openRun(run) }}>
+                <div className="historyRow" key={run.id}>
                   <div>
                     <div className="historyDateLine">{formatHistoryHeadline(run.createdAt)}</div>
                     <div className="historyMetaLine">1 upload tersimpan · Meta {run.metaFile || '—'} · Shopee {run.shopeeFile || '—'} · update {new Date(run.createdAt).toLocaleString('sv-SE').replace('T', ' ')}</div>
