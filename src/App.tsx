@@ -828,8 +828,10 @@ export default function App() {
 
   async function refreshHistory(currentEmail = email) {
     if (!currentEmail) return
+    const fallback = makeReferenceRun(currentEmail)
     const storedRuns = await listRuns(currentEmail)
-    setRuns(storedRuns.length ? storedRuns : [makeReferenceRun(currentEmail)])
+    const hydratedRuns = storedRuns.map((run) => run.analysis ? run : { ...run, analysis: fallback.analysis })
+    setRuns(hydratedRuns.length ? hydratedRuns : [fallback])
   }
 
   useEffect(() => {
