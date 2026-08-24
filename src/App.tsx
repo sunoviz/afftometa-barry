@@ -221,10 +221,30 @@ function formatHistoryHeadline(createdAt: string) {
   return `${created.toLocaleDateString('sv-SE')} · ${created.toLocaleDateString('sv-SE')}`
 }
 
+const HELP: Record<string, string> = {
+  Spend: 'Biaya iklan Meta. Jika PPN aktif, angka bisa termasuk PPN.',
+  Komisi: 'Komisi bersih affiliate dari CSV Shopee.',
+  Net: 'Komisi dikurangi spend iklan. Positif berarti profit, negatif berarti rugi.',
+  ROAS: 'Return on Ad Spend: komisi dibagi spend iklan. 1x = balik modal.',
+  ROI: 'Return on Investment: (komisi - spend) / spend.',
+  EPC: 'Earnings per Click: komisi dibagi jumlah klik. Bandingkan dengan CPC; EPC > CPC berarti traffic lebih sehat.',
+  'CPC META': 'Biaya per klik dari Meta: spend dibagi Meta clicks.',
+  'REAL CPC': 'Spend campaign dibagi jumlah order/tag yang teratribusi. Dipakai sebagai proxy biaya real per order.',
+  'REAL RATE': 'Orders dibagi click report Shopee per tag. Ini click-to-order rate dari sisi Shopee.',
+  Orders: 'Jumlah order unik dari Shopee berdasarkan data CSV.',
+  'Zero%': 'Persentase item/order yang masuk tapi komisinya Rp0.',
+  'LP RATE': 'LP Views dibagi Meta clicks. Mengukur berapa klik yang berhasil load landing page.',
+}
+
+function HelpLabel({ label, help }: { label: string; help?: string }) {
+  const title = help || HELP[label] || label
+  return <span className="helpLabel" title={title} tabIndex={0}>{label}<span>?</span></span>
+}
+
 function StatCard({ label, value, hint, danger = false, accent = false }: { label: string; value: string; hint?: string; danger?: boolean; accent?: boolean }) {
   return (
     <div className={`resultKpi ${danger ? 'danger' : ''} ${accent ? 'accent' : ''}`}>
-      <div className="kpiLabel">{label} <span>?</span></div>
+      <div className="kpiLabel"><HelpLabel label={label} help={HELP[label] || hint} /></div>
       <strong>{value}</strong>
       {hint ? <small>{hint}</small> : null}
     </div>
@@ -366,7 +386,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
         recommendation: status,
         avgOrder: tag.orders ? tag.commission / tag.orders : 0,
         realRate: base.clickCount ? (tag.orders / base.clickCount) * 100 : null,
-        realCpc: tag.orders ? spend / tag.orders : null,
+        realCpc: base.clickCount ? spend / base.clickCount : null,
       }
     }).sort((a: any, b: any) => b.commission - a.commission)
   }, [analysis.tags, ppn, sourceShopee])
@@ -570,17 +590,17 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                         <thead>
                           <tr>
                             <th>TANGGAL</th>
-                            <th>SPEND</th>
-                            <th>KOMISI</th>
-                            <th>NET</th>
-                            <th>ROAS</th>
-                            <th>ROI</th>
-                            <th>EPC</th>
+                            <th><HelpLabel label="Spend" /></th>
+                            <th><HelpLabel label="Komisi" /></th>
+                            <th><HelpLabel label="Net" /></th>
+                            <th><HelpLabel label="ROAS" /></th>
+                            <th><HelpLabel label="ROI" /></th>
+                            <th><HelpLabel label="EPC" /></th>
                             <th>META CLICKS</th>
                             <th>LP VIEWS</th>
-                            <th>LP RATE</th>
-                            <th>ORDERS</th>
-                            <th>ZERO%</th>
+                            <th><HelpLabel label="LP RATE" /></th>
+                            <th><HelpLabel label="Orders" /></th>
+                            <th><HelpLabel label="Zero%" /></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -682,13 +702,13 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                   <section className="resultTablePanel dashboardTablePanel">
                     <div className="tableHeaderRow stack">
                       <h3>ATRIBUSI PER TAG</h3>
-                      <div className="tableHeaderHint">Klik baris untuk lihat detail produk per tag</div>
+                      <div className="tableHeaderHint">Klik baris untuk lihat detail produk per tag · EPC = komisi / click report per tag, bandingkan dengan CPC Meta</div>
                     </div>
                     <div className="resultTableWrap">
                       <table>
-                        <thead><tr><th>TAG (LINK1)</th><th>AKUN</th><th>MATCH</th><th>SPEND</th><th>KOMISI</th><th>NET</th><th>ROAS</th><th>ROI</th><th>CPC META</th><th>EPC</th><th>REKOMENDASI</th><th>ORDERS</th><th>AVG/ORDER</th><th>REAL CPC</th><th>REAL RATE</th></tr></thead>
+                        <thead><tr><th>TAG (LINK1)</th><th>AKUN</th><th>MATCH</th><th><HelpLabel label="Spend" /></th><th><HelpLabel label="Komisi" /></th><th><HelpLabel label="Net" /></th><th><HelpLabel label="ROAS" /></th><th><HelpLabel label="ROI" /></th><th><HelpLabel label="CPC META" /></th><th><HelpLabel label="EPC" /></th><th>REKOMENDASI</th><th><HelpLabel label="Orders" /></th><th>AVG/ORDER</th><th><HelpLabel label="REAL CPC" /></th><th><HelpLabel label="REAL RATE" /></th></tr></thead>
                         <tbody>
-                          {matchedTags.map((row: any) => <tr key={row.tag}><td>{row.tag}</td><td>Akun 1</td><td>{row.campaign || '–'}</td><td>{row.spend ? fmt.format(Math.round(row.spend)) : '–'}</td><td>{fmt.format(Math.round(row.commission || 0))}</td><td>{row.net >= 0 ? `+${fmt.format(Math.round(row.net))}` : fmt.format(Math.round(row.net))}</td><td>{row.roas ? `${row.roas.toFixed(2)}x` : '–'}</td><td>{row.roi ? `${(row.roi * 100).toFixed(1)}%` : '–'}</td><td>{row.clickCount ? rp(row.spend / row.clickCount) : '–'}</td><td>{row.clickCount ? rp(row.commission / row.clickCount) : '–'}</td><td>{row.recommendation}</td><td>{row.orders || 0}</td><td>{row.orders ? rp(row.avgOrder) : '–'}</td><td>{row.realCpc ? rp(row.realCpc) : '–'}</td><td>{row.realRate !== null ? `${row.realRate.toFixed(1)}%` : '–'}</td></tr>)}
+                          {matchedTags.map((row: any) => <tr key={row.tag}><td>{row.tag}</td><td>Akun 1</td><td>{row.campaign || '–'}</td><td>{row.spend ? fmt.format(Math.round(row.spend)) : '–'}</td><td>{fmt.format(Math.round(row.commission || 0))}</td><td>{row.net >= 0 ? `+${fmt.format(Math.round(row.net))}` : fmt.format(Math.round(row.net))}</td><td>{row.roas ? `${row.roas.toFixed(2)}x` : '–'}</td><td>{row.roi ? `${(row.roi * 100).toFixed(1)}%` : '–'}</td><td>{row.metaClicks ? rp(row.spend / row.metaClicks) : '–'}</td><td>{row.metaClicks ? rp(row.commission / row.metaClicks) : '–'}</td><td>{row.recommendation}</td><td>{row.orders || 0}</td><td>{row.orders ? rp(row.avgOrder) : '–'}</td><td>{row.realCpc ? rp(row.realCpc) : '–'}</td><td>{row.realRate !== null ? `${row.realRate.toFixed(1)}%` : '–'}</td></tr>)}
                         </tbody>
                       </table>
                     </div>

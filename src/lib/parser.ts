@@ -170,7 +170,7 @@ export function analyze(metaText: string, shopeeText: string, ppn = 0.11, clickT
   const tagMap = new Map<string, any>()
   for (const s of shopee) { const tag = s.tag || '(no tag)'; const o = tagMap.get(tag) || { tag, commission: 0, orders: 0, purchase: 0, clickCount: 0, campaign: '', matchScore: 0, matchType: 'unmatched' }; o.commission += s.commission; o.purchase += s.purchase; o.orders += 1; tagMap.set(tag, o) }
   for (const c of clicksReport) { const tag = c.tag || '(no tag)'; const o = tagMap.get(tag) || { tag, commission: 0, orders: 0, purchase: 0, clickCount: 0, campaign: '', matchScore: 0, matchType: 'unmatched' }; o.clickCount += 1; tagMap.set(tag, o) }
-  const tags = [...tagMap.values()].map(t => { const m = matchCampaignForTag(t.tag, meta); const c = campaignMap.get(m.campaign); const spendTag = c?.spend || 0; return { ...t, campaign: m.campaign, matchScore: m.score, matchType: m.type, spend: spendTag, net: t.commission - spendTag*(1+ppn), roas: spendTag ? t.commission/(spendTag*(1+ppn)) : 0 } }).sort((a,b)=>b.commission-a.commission)
+  const tags = [...tagMap.values()].map(t => { const m = matchCampaignForTag(t.tag, meta); const c = campaignMap.get(m.campaign); const spendTag = c?.spend || 0; return { ...t, campaign: m.campaign, matchScore: m.score, matchType: m.type, spend: spendTag, metaClicks: c?.clicks || 0, net: t.commission - spendTag*(1+ppn), roas: spendTag ? t.commission/(spendTag*(1+ppn)) : 0 } }).sort((a,b)=>b.commission-a.commission)
   const warnings = [] as string[]
   if (metaParsed.stats.summarySkipped) warnings.push(`${metaParsed.stats.summarySkipped} row summary Meta diskip biar spend tidak double count.`)
   if (metaParsed.stats.zeroSkipped) warnings.push(`${metaParsed.stats.zeroSkipped} row Meta nol diskip.`)
