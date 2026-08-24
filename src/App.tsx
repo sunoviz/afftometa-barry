@@ -843,6 +843,29 @@ export default function App() {
     }
   }, [])
 
+  useEffect(() => {
+    function restoreFromHash() {
+      if (window.location.hash !== '#dashboard') return
+      const stored = window.sessionStorage.getItem('afftometa_active_run')
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as SavedRun
+          if (parsed.analysis) {
+            setActiveRun(parsed)
+            setAnalysis(parsed.analysis)
+            return
+          }
+        } catch {}
+      }
+      const fallback = makeReferenceRun(email || window.localStorage.getItem('afftometa_email') || 'barry@gmail.com')
+      setActiveRun(fallback)
+      setAnalysis(fallback.analysis)
+    }
+    restoreFromHash()
+    window.addEventListener('hashchange', restoreFromHash)
+    return () => window.removeEventListener('hashchange', restoreFromHash)
+  }, [email])
+
   async function handleLogin() {
     const normalized = emailInput.trim().toLowerCase()
     if (!normalized) {
@@ -1007,7 +1030,7 @@ export default function App() {
                     <div className="historyDateLine">{formatHistoryHeadline(run.createdAt)}</div>
                     <div className="historyMetaLine">1 upload tersimpan · Meta {run.metaFile || '—'} · Shopee {run.shopeeFile || '—'} · update {new Date(run.createdAt).toLocaleString('sv-SE').replace('T', ' ')}</div>
                   </div>
-                  <button type="button" className="outlineButton" onClick={(event) => { event.stopPropagation(); openRun(run) }}>Buka</button>
+                  <a className="outlineButton historyOpenLink" href="#dashboard" onClick={() => openRun(run)}>Buka</a>
                 </div>
               ))}
             </div>

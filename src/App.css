@@ -220,12 +220,17 @@ label {
 }
 
 .outlineButton,
-.guideNav {
+.guideNav,
+.historyOpenLink {
   height: 28px;
   padding: 0 13px;
   border: 1px solid rgba(238, 77, 45, 0.52);
   background: transparent;
   color: #ff7657;
+}
+
+.historyOpenLink {
+  text-decoration: none;
 }
 
 .guideButton:hover,
