@@ -1076,12 +1076,70 @@ label {
 
 .produkGrid {
   display: grid;
-  grid-template-columns: 1fr 0.68fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
+.produkChannelPanel,
+.produkStatsRow,
 .produkTablePanel {
   grid-column: 1 / -1;
+}
+
+.channelCards,
+.produkStatsRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.donutPanel {
+  min-height: 230px;
+}
+
+.donutRow {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.donutChart {
+  width: 160px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.donutChart::after {
+  content: '';
+  position: absolute;
+  inset: 40px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  border: 1px solid #303236;
+}
+
+.donutLegend {
+  display: grid;
+  gap: 8px;
+  color: #b9c0ca;
+  font-size: 12px;
+}
+
+.donutLegend div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.donutLegend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
 }
 
 .miniMetricGrid,
@@ -1115,11 +1173,138 @@ label {
   align-content: start;
 }
 
-.funnelGrid {
+.funnelLayout {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 12px;
+}
+
+.funnelRows {
+  display: grid;
+  gap: 14px;
+}
+
+.funnelStepTop {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  color: #ccd3dd;
+  font-size: 13px;
+}
+
+.funnelStepTop strong {
+  font-size: 18px;
+}
+
+.funnelStepTop b {
+  min-width: 54px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #2c3b2f;
+  color: #66d382;
+  text-align: center;
+  font-size: 11px;
+}
+
+.funnelStepTop b.badRate {
+  background: #3a1c19;
+  color: #ff7965;
+}
+
+.funnelBarTrack {
+  height: 12px;
+  margin: 8px 0 4px;
+  border-radius: 999px;
+  background: #242424;
+  overflow: hidden;
+}
+
+.funnelBar {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.funnelBar.gray { background: #646464; }
+.funnelBar.red { background: #d85b39; }
+.funnelBar.amber { background: #d69a31; }
+.funnelBar.green { background: #4abb74; }
+
+.funnelStep small,
+.funnelCommission small {
+  color: #808996;
+  font-size: 11px;
+}
+
+.funnelCommission {
+  margin-top: 4px;
+  display: grid;
+  gap: 4px;
+  color: #a7afba;
+}
+
+.funnelCommission strong {
+  color: #57d782;
+  font-size: 20px;
+}
+
+.funnelSideGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
+
+.atribusiFilters {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.atribusiFilters label {
+  display: grid;
+  gap: 5px;
+  color: #818a96;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.atribusiFilters input {
+  width: 126px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #353535;
+  background: #151515;
+  color: #e7ebf0;
+  padding: 0 9px;
+}
+
+.atribusiFilters small {
+  color: #8c94a0;
+  font-size: 11px;
+  padding-bottom: 7px;
+}
+
+.outlineButton.reset {
+  border-color: #4a4d55;
+  color: #b8bec8;
+}
+
+.recommendation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  height: 22px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.recommendation.scale { background: #143922; color: #66d582; }
+.recommendation.hold,
+.recommendation.tahan { background: #3b3018; color: #ffc84c; }
+.recommendation.kill { background: #3a1715; color: #ff7b67; }
 
 .actionSummaryPanel p {
   color: #9ba3ad;

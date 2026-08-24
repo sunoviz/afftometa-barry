@@ -2,7 +2,7 @@
 import Papa from 'papaparse'
 
 export type MetaRow = { date: string; campaign: string; spend: number; clicks: number; lpViews: number; impressions: number }
-export type ShopeeRow = { orderId: string; status: string; orderDate: string; clickDate: string; product: string; purchase: number; commission: number; tag: string; platform: string }
+export type ShopeeRow = { orderId: string; status: string; orderDate: string; clickDate: string; product: string; category: string; purchase: number; commission: number; tag: string; platform: string; isNewUser: boolean }
 export type ClickRow = { clickId: string; clickDate: string; tag: string; referrer: string }
 export type QualityReport = {
   metaRows: number; metaRowsUsed: number; metaSummaryRowsSkipped: number; metaZeroRowsSkipped: number;
@@ -110,10 +110,12 @@ export function parseShopeeCsv(text: string) {
       orderDate: norm(col(row, 'Order Time', 'Waktu Pemesanan')).slice(0, 10),
       clickDate: norm(col(row, 'Click Time', 'Waktu Klik')).slice(0, 10),
       product: norm(col(row, 'Item Name', 'Nama Barange', 'Nama Barang')),
+      category: norm(col(row, 'L1 Kategori Global', 'L1 Global Category', 'Kategori Global L1')) || 'Tanpa kategori',
       purchase: parseIdr(col(row, 'Purchase Value(Rp)', 'Purchase Value (Rp)', 'Nilai Pembelian(Rp)', 'Nilai Pembelian (Rp)')),
       commission: parseShopeeMoney(col(row, 'Affiliate Net Commission(Rp)', 'Affiliate Net Commission (Rp)', 'Komisi Bersih Affiliate (Rp)')),
       tag: norm(col(row, 'Tag_link1')),
       platform: norm(col(row, 'Channel', 'Platform')) || 'Others',
+      isNewUser: /baru/i.test(norm(col(row, 'Status Pemebelian', 'Status Pembelian', 'Buyer Status', 'Status Pembeli'))),
     }
   }).filter(r => r.status && !['Cancelled', 'Dibatalkan'].includes(r.status))
   return { rows, stats: { totalRows: parsed.data.length, usedRows: rows.length, errors: parsed.errors } }

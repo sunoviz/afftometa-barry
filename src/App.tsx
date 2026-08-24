@@ -41,6 +41,19 @@ const APP_SUBTITLE = 'Shopee × Meta Ads History Tracker'
 const FOOTER_TEXT = '© 2026 Satruk Affiliate Tracker — private server build'
 const fmt = new Intl.NumberFormat('id-ID')
 const rp = (n: number) => `Rp ${fmt.format(Math.round(n || 0))}`
+const DONUT_COLORS = ['#e15c38', '#2ea66f', '#22a7a7', '#4f83e3', '#8d63d8', '#b98234', '#667a2e', '#d8b24f']
+function makeDonut<T extends Record<string, any>>(rows: T[], valueKey: keyof T) {
+  const total = rows.reduce((sum, row) => sum + Number(row[valueKey] || 0), 0) || 1
+  let cursor = 0
+  const parts = rows.slice(0, 8).map((row, index) => {
+    const value = Number(row[valueKey] || 0)
+    const start = cursor
+    const end = cursor + (value / total) * 100
+    cursor = end
+    return `${DONUT_COLORS[index % DONUT_COLORS.length]} ${start}% ${end}%`
+  })
+  return parts.length ? `conic-gradient(${parts.join(', ')})` : 'conic-gradient(#333 0% 100%)'
+}
 const compactRp = (n: number, signed = false) => {
   const value = Math.round(n || 0)
   const sign = signed && value > 0 ? '+ ' : value < 0 ? '- ' : ''
@@ -267,6 +280,9 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
   const [targetPerDay, setTargetPerDay] = useState('500.000')
   const [historyMode, setHistoryMode] = useState<'Semua' | 'Terbaru'>('Semua')
   const [sourceFilter, setSourceFilter] = useState('Semua')
+  const [minSpendInput, setMinSpendInput] = useState('')
+  const [maxSpendInput, setMaxSpendInput] = useState('')
+  const [spendFilter, setSpendFilter] = useState<{ min: number; max: number | null }>({ min: 0, max: null })
 
   const sourceShopee = useMemo(() => sourceFilter === 'Semua' ? analysis.shopee : analysis.shopee.filter((row: any) => String(row.platform || 'Others') === sourceFilter), [analysis.shopee, sourceFilter])
   const totals = useMemo(() => {
@@ -339,7 +355,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
   const categoryRows = useMemo(() => {
     const map = new Map<string, { category: string; commission: number; items: number }>()
     for (const row of sourceShopee as any[]) {
-      const category = String((row.product || 'Tanpa kategori')).split(',')[0].trim() || 'Tanpa kategori'
+      const category = String(row.category || 'Tanpa kategori').trim() || 'Tanpa kategori'
       const current = map.get(category) || { category, commission: 0, items: 0 }
       current.commission += Number(row.commission || 0)
       current.items += 1
@@ -347,11 +363,29 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
     }
     return [...map.values()].sort((a, b) => b.commission - a.commission)
   }, [sourceShopee])
+  const channelRows = useMemo(() => {
+    const map = new Map<string, { label: string; commission: number; orders: Set<string>; items: number }>()
+    for (const row of sourceShopee as any[]) {
+      const raw = String(row.platform || 'Others')
+      const label = raw === 'Others' ? 'Organik' : 'Social Media'
+      const current = map.get(label) || { label, commission: 0, orders: new Set<string>(), items: 0 }
+      current.commission += Number(row.commission || 0)
+      if (row.orderId) current.orders.add(String(row.orderId))
+      current.items += 1
+      map.set(label, current)
+    }
+    return [...map.values()].sort((a, b) => b.commission - a.commission)
+  }, [sourceShopee])
+  const categoryDonut = useMemo(() => makeDonut(categoryRows, 'commission'), [categoryRows])
+  const platformDonut = useMemo(
+    () => makeDonut(platformCounts.map(([name, count]) => ({ category: name, commission: count })), 'commission'),
+    [platformCounts],
+  )
   const productRows = useMemo(() => {
     const map = new Map<string, { product: string; category: string; commission: number; items: number }>()
     for (const row of sourceShopee as any[]) {
       const product = String(row.product || 'Produk tanpa nama')
-      const category = String(product).split(',')[0].trim() || 'Tanpa kategori'
+      const category = String(row.category || 'Tanpa kategori').trim() || 'Tanpa kategori'
       const current = map.get(product) || { product, category, commission: 0, items: 0 }
       current.commission += Number(row.commission || 0)
       current.items += 1
@@ -360,13 +394,14 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
     return [...map.values()].sort((a, b) => b.commission - a.commission).slice(0, 15)
   }, [sourceShopee])
   const matchedTags = useMemo(() => {
-    const sourceTags = new Map<string, { tag: string; commission: number; orders: number; purchase: number }>()
+    const sourceTags = new Map<string, { tag: string; commission: number; orders: number; purchase: number; newUsers: number }>()
     for (const row of sourceShopee as any[]) {
       const tag = row.tag || '(no tag)'
-      const current = sourceTags.get(tag) || { tag, commission: 0, orders: 0, purchase: 0 }
+      const current = sourceTags.get(tag) || { tag, commission: 0, orders: 0, purchase: 0, newUsers: 0 }
       current.commission += Number(row.commission || 0)
       current.purchase += Number(row.purchase || 0)
       current.orders += 1
+      if (row.isNewUser) current.newUsers += 1
       sourceTags.set(tag, current)
     }
     return [...sourceTags.values()].map((tag: any) => {
@@ -375,7 +410,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
       const net = tag.commission - spend * (1 + ppn)
       const roas = spend > 0 ? tag.commission / (spend * (1 + ppn)) : 0
       const roi = spend > 0 ? net / (spend * (1 + ppn)) : 0
-      const status = roas >= 1.2 ? '🟢 SCALE' : roas < 0.5 && spend > 0 ? '🔴 KILL' : '🟡 TAHAN'
+      const status = roas >= 1.5 ? 'SCALE' : roas >= 1 ? 'HOLD' : spend > 0 ? 'KILL' : 'TAHAN'
       return {
         ...base,
         ...tag,
@@ -390,9 +425,16 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
       }
     }).sort((a: any, b: any) => b.commission - a.commission)
   }, [analysis.tags, ppn, sourceShopee])
-  const scaleCount = matchedTags.filter((item: any) => item.recommendation.includes('SCALE')).length
-  const tahanCount = matchedTags.filter((item: any) => item.recommendation.includes('TAHAN')).length
-  const killCount = matchedTags.filter((item: any) => item.recommendation.includes('KILL')).length
+  const visibleTags = useMemo(() => matchedTags.filter((item: any) => {
+    const spend = Number(item.spend || 0)
+    if (spend < spendFilter.min) return false
+    if (spendFilter.max !== null && spend > spendFilter.max) return false
+    return true
+  }), [matchedTags, spendFilter])
+  const scaleCount = visibleTags.filter((item: any) => item.recommendation === 'SCALE').length
+  const holdCount = visibleTags.filter((item: any) => item.recommendation === 'HOLD').length
+  const tahanCount = visibleTags.filter((item: any) => item.recommendation === 'TAHAN').length
+  const killCount = visibleTags.filter((item: any) => item.recommendation === 'KILL').length
 
   const trafficLabel = `${sourceShopee.length} / ${analysis.shopee.length} orders (${analysis.shopee.length ? Math.round((sourceShopee.length / analysis.shopee.length) * 100) : 0}%)`
   const targetPct = totals.targetRaw > 0 ? Math.max(0, Math.round((totals.net / totals.targetRaw) * 100)) : 0
@@ -405,6 +447,24 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
   const maxNet = Math.max(...dailyRows.map((x: any) => Math.abs(x.net)), 1)
 
   const visibleRuns = historyMode === 'Terbaru' ? runs.slice(0, 1) : runs
+  const funnelRows = [
+    { label: 'Impresi', value: analysis.totals.impressions || 0, pct: 100, sub: 'Tayangan iklan Meta', tone: 'gray' },
+    { label: 'Link Clicks', value: totals.clicks, pct: analysis.totals.impressions ? (totals.clicks / analysis.totals.impressions) * 100 : 0, sub: 'Klik iklan (Meta)', tone: 'red' },
+    { label: 'Landing Page Views', value: totals.lpViews, pct: totals.clicks ? (totals.lpViews / totals.clicks) * 100 : 0, sub: 'Pixel load berhasil (Meta)', tone: 'amber' },
+    { label: 'Unique Orders', value: totals.orders, pct: totals.clicks ? (totals.orders / totals.clicks) * 100 : 0, sub: 'Pesanan di Shopee (by order date)', tone: 'green' },
+  ]
+
+  function applySpendFilter() {
+    const min = Number(minSpendInput.replace(/\D/g, '')) || 0
+    const maxRaw = Number(maxSpendInput.replace(/\D/g, '')) || 0
+    setSpendFilter({ min, max: maxRaw > 0 ? maxRaw : null })
+  }
+
+  function resetSpendFilter() {
+    setMinSpendInput('')
+    setMaxSpendInput('')
+    setSpendFilter({ min: 0, max: null })
+  }
 
   function exportDailyCsv() {
     const header = ['TANGGAL','SPEND','KOMISI','NET','ROAS','ROI','EPC','META CLICKS','LP VIEWS','LP RATE','ORDERS','ZERO%']
@@ -651,17 +711,28 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
 
               {tab === 'produk' ? (
                 <div className="produkGrid">
-                  <section className="resultTablePanel dashboardTablePanel miniCardsPanel">
+                  <section className="resultTablePanel dashboardTablePanel produkChannelPanel">
                     <h3>KOMISI PER CHANNEL</h3>
-                    <div className="miniMetricGrid">
-                      {platformCounts.map(([name, count], idx) => <MetricBadge key={name} label={name === 'Others' ? 'Organik' : 'Social Media'} value={rp(idx === 0 ? totals.commission - 720 : 720)} sub={`${Math.round((count / analysis.shopee.length) * 100)}% dari total · ${count} orders`} />)}
+                    <div className="channelCards">
+                      {channelRows.map((row) => <MetricBadge key={row.label} label={row.label} value={compactRp(row.commission)} sub={`${Math.round((row.commission / Math.max(1, totals.commission)) * 100)}% dari total · ${row.orders.size || row.items} orders`} />)}
                     </div>
-                    <h3 className="panelSpacer">KOMISI PER KATEGORI</h3>
-                    <div className="categoryList">{categoryRows.slice(0, 8).map((row) => <div key={row.category} className="categoryRow"><span>{row.category}</span><strong>{rp(row.commission)}</strong></div>)}</div>
                   </section>
-                  <section className="resultTablePanel dashboardTablePanel sideStatsPanel">
+                  <section className="resultTablePanel dashboardTablePanel donutPanel">
+                    <h3>KOMISI PER KATEGORI</h3>
+                    <div className="donutRow">
+                      <div className="donutChart" style={{ background: categoryDonut }} />
+                      <div className="donutLegend">{categoryRows.slice(0, 8).map((row, idx) => <div key={row.category}><i style={{ background: DONUT_COLORS[idx % DONUT_COLORS.length] }} />{row.category}</div>)}</div>
+                    </div>
+                  </section>
+                  <section className="resultTablePanel dashboardTablePanel donutPanel">
                     <h3>PLATFORM KLIK</h3>
-                    <MetricBadge label="Zero commission rate" value={`${totals.zeroPct.toFixed(1)}%`} sub={`${totals.zeroItems} dari ${totals.totalItems} item`} />
+                    <div className="donutRow">
+                      <div className="donutChart" style={{ background: platformDonut }} />
+                      <div className="donutLegend">{platformCounts.map(([name], idx) => <div key={name}><i style={{ background: DONUT_COLORS[idx % DONUT_COLORS.length] }} />{name}</div>)}</div>
+                    </div>
+                  </section>
+                  <section className="resultTablePanel dashboardTablePanel sideStatsPanel produkStatsRow">
+                    <MetricBadge label="Zero commission rate" value={`${totals.zeroPct.toFixed(1)}%`} sub={`${totals.zeroItems} dari ${totals.totalItems} items`} />
                     <MetricBadge label="Avg komisi / item (non-zero)" value={rp((totals.commission || 0) / Math.max(1, totals.totalItems - totals.zeroItems))} sub={`${Math.max(0, totals.totalItems - totals.zeroItems)} item yang dapat komisi`} />
                   </section>
                   <section className="resultTablePanel dashboardTablePanel produkTablePanel">
@@ -670,7 +741,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                       <table>
                         <thead><tr><th>PRODUK</th><th>KATEGORI</th><th>KOMISI (RP)</th><th>ITEMS</th><th>AVG / ITEM</th></tr></thead>
                         <tbody>
-                          {productRows.map((row) => <tr key={row.product}><td>{row.product}</td><td>{row.category}</td><td>{fmt.format(Math.round(row.commission))}</td><td>{row.items}</td><td>{rp(row.commission / Math.max(1, row.items))}</td></tr>)}
+                          {productRows.map((row) => <tr key={row.product}><td title={row.product}>{row.product}</td><td>{row.category}</td><td>{fmt.format(Math.round(row.commission))}</td><td>{row.items}</td><td>{rp(row.commission / Math.max(1, row.items))}</td></tr>)}
                         </tbody>
                       </table>
                     </div>
@@ -679,22 +750,27 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
               ) : null}
 
               {tab === 'funnel' ? (
-                <section className="resultTablePanel dashboardTablePanel funnelPanel">
-                  <div className="funnelGrid">
-                    <MetricBadge label="Impresi" value={fmt.format(analysis.totals.impressions || 0)} sub="Tayangan iklan Meta" />
-                    <MetricBadge label="Link Clicks" value={fmt.format(totals.clicks)} sub={`${analysis.totals.impressions ? ((totals.clicks / analysis.totals.impressions) * 100).toFixed(1) : '0.0'}%`} />
-                    <MetricBadge label="Landing Page Views" value={fmt.format(totals.lpViews)} sub={`${totals.lpRate.toFixed(1)}%`} />
-                    <MetricBadge label="Unique Orders" value={fmt.format(totals.orders)} sub={`${totals.clicks ? ((totals.orders / totals.clicks) * 100).toFixed(1) : '0.0'}%`} />
-                    <MetricBadge label="Total Komisi" value={rp(totals.commission)} sub="Komisi bersih affiliate (Rp)" />
-                    <MetricBadge label="CLICK-TO-LP" value={`${totals.lpRate.toFixed(1)}%`} sub="LP views / Clicks" />
+                <div className="funnelLayout">
+                  <section className="resultTablePanel dashboardTablePanel funnelBreakdownPanel">
+                    <div className="funnelRows">
+                      {funnelRows.map((row) => <div key={row.label} className="funnelStep">
+                        <div className="funnelStepTop"><span>{row.label}</span><strong>{fmt.format(Math.round(row.value))}</strong><b className={row.pct < 20 && row.label !== 'Impresi' ? 'badRate' : ''}>{row.label === 'Impresi' ? '' : `${row.pct.toFixed(1)}%`}</b></div>
+                        <div className="funnelBarTrack"><div className={`funnelBar ${row.tone}`} style={{ width: `${Math.min(100, Math.max(1, row.pct))}%` }} /></div>
+                        <small>{row.sub}</small>
+                      </div>)}
+                      <div className="funnelCommission"><span>Total Komisi</span><strong>{rp(totals.commission)}</strong><small>Komisi bersih affiliate (Rp)</small></div>
+                    </div>
+                  </section>
+                  <section className="funnelSideGrid">
+                    <MetricBadge label="CLICK TO LP" value={`${totals.lpRate.toFixed(1)}%`} sub="LP views / Clicks" />
                     <MetricBadge label="CLICK-TO-ORDER" value={`${totals.clicks ? ((totals.orders / totals.clicks) * 100).toFixed(1) : '0.0'}%`} sub="Orders / Clicks" />
                     <MetricBadge label="COST PER ORDER" value={rp(totals.orders ? totals.spendPpn / totals.orders : 0)} sub="Spend+PPN / Orders" />
-                    <MetricBadge label="KOMISI PER ORDER" value={rp(totals.commissionPerOrder)} sub="Komisi / Orders" />
+                    <MetricBadge label="KOMISI PER ORDER" value={rp(totals.commissionPerOrder)} sub="Komisi / Order" />
                     <MetricBadge label="EPC (KOMISI/KLIK)" value={rp(totals.clicks ? totals.commission / totals.clicks : 0)} sub="Komisi / Meta clicks" />
-                    <MetricBadge label="ROI" value={`${(totals.roi * 100).toFixed(1)}%`} sub="(Komisi−Spend) / Spend" />
+                    <MetricBadge label="ROI" value={`${(totals.roi * 100).toFixed(1)}%`} sub="(Komisi - Spend) / Spend" />
                     <MetricBadge label="CPC EFEKTIF" value={rp(totals.cpc)} sub="Spend+PPN / Clicks" />
-                  </div>
-                </section>
+                  </section>
+                </div>
               ) : null}
 
               {tab === 'atribusi' ? (
@@ -702,13 +778,20 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                   <section className="resultTablePanel dashboardTablePanel">
                     <div className="tableHeaderRow stack">
                       <h3>ATRIBUSI PER TAG</h3>
-                      <div className="tableHeaderHint">Klik baris untuk lihat detail produk per tag · EPC = komisi / click report per tag, bandingkan dengan CPC Meta</div>
+                      <div className="tableHeaderHint">Klik baris untuk lihat detail produk per tag</div>
+                      <div className="atribusiFilters">
+                        <label><span>MIN SPEND</span><input value={minSpendInput} onChange={(e) => setMinSpendInput(e.target.value)} placeholder="contoh 60000" /></label>
+                        <label><span>MAX SPEND</span><input value={maxSpendInput} onChange={(e) => setMaxSpendInput(e.target.value)} placeholder="opsional" /></label>
+                        <button type="button" className="outlineButton" onClick={applySpendFilter}>Terapkan</button>
+                        <button type="button" className="outlineButton reset" onClick={resetSpendFilter}>Reset</button>
+                        <small>Tampil {visibleTags.length} dari {matchedTags.length} tag</small>
+                      </div>
                     </div>
                     <div className="resultTableWrap">
                       <table>
-                        <thead><tr><th>TAG (LINK1)</th><th>AKUN</th><th>MATCH</th><th><HelpLabel label="Spend" /></th><th><HelpLabel label="Komisi" /></th><th><HelpLabel label="Net" /></th><th><HelpLabel label="ROAS" /></th><th><HelpLabel label="ROI" /></th><th><HelpLabel label="CPC META" /></th><th><HelpLabel label="EPC" /></th><th>REKOMENDASI</th><th><HelpLabel label="Orders" /></th><th>AVG/ORDER</th><th><HelpLabel label="REAL CPC" /></th><th><HelpLabel label="REAL RATE" /></th></tr></thead>
+                        <thead><tr><th></th><th>TAG (LINK1)</th><th>AKUN</th><th>MATCH</th><th><HelpLabel label="Spend" /></th><th><HelpLabel label="Komisi" /></th><th><HelpLabel label="Net" /></th><th><HelpLabel label="ROAS" /></th><th><HelpLabel label="ROI" /></th><th><HelpLabel label="CPC META" /></th><th><HelpLabel label="EPC" /></th><th>NEW USER</th><th>REKOMENDASI</th><th><HelpLabel label="Orders" /></th><th>AVG/ORDER</th><th><HelpLabel label="REAL CPC" /></th><th><HelpLabel label="REAL RATE" /></th></tr></thead>
                         <tbody>
-                          {matchedTags.map((row: any) => <tr key={row.tag}><td>{row.tag}</td><td>Akun 1</td><td>{row.campaign || '–'}</td><td>{row.spend ? fmt.format(Math.round(row.spend)) : '–'}</td><td>{fmt.format(Math.round(row.commission || 0))}</td><td>{row.net >= 0 ? `+${fmt.format(Math.round(row.net))}` : fmt.format(Math.round(row.net))}</td><td>{row.roas ? `${row.roas.toFixed(2)}x` : '–'}</td><td>{row.roi ? `${(row.roi * 100).toFixed(1)}%` : '–'}</td><td>{row.metaClicks ? rp(row.spend / row.metaClicks) : '–'}</td><td>{row.metaClicks ? rp(row.commission / row.metaClicks) : '–'}</td><td>{row.recommendation}</td><td>{row.orders || 0}</td><td>{row.orders ? rp(row.avgOrder) : '–'}</td><td>{row.realCpc ? rp(row.realCpc) : '–'}</td><td>{row.realRate !== null ? `${row.realRate.toFixed(1)}%` : '–'}</td></tr>)}
+                          {visibleTags.map((row: any) => <tr key={row.tag}><td>▸</td><td>{row.tag}</td><td>Akun 1</td><td>{row.campaign || '–'}</td><td>{row.spend ? fmt.format(Math.round(row.spend)) : '–'}</td><td>{fmt.format(Math.round(row.commission || 0))}</td><td>{row.net >= 0 ? `+${fmt.format(Math.round(row.net))}` : fmt.format(Math.round(row.net))}</td><td>{row.roas ? `${row.roas.toFixed(2)}x` : '–'}</td><td>{row.roi ? `${(row.roi * 100).toFixed(1)}%` : '–'}</td><td>{row.metaClicks ? rp(row.spend / row.metaClicks) : '–'}</td><td>{row.metaClicks ? rp(row.commission / row.metaClicks) : '–'}</td><td>{row.newUsers || 0}</td><td><span className={`recommendation ${String(row.recommendation).toLowerCase()}`}>{row.recommendation}</span></td><td>{row.orders || 0}</td><td>{row.orders ? rp(row.avgOrder) : '–'}</td><td>{row.realCpc ? rp(row.realCpc) : '–'}</td><td>{row.realRate !== null ? `${row.realRate.toFixed(1)}%` : '–'}</td></tr>)}
                         </tbody>
                       </table>
                     </div>
@@ -716,8 +799,8 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                   <section className="resultTablePanel dashboardTablePanel actionSummaryPanel">
                     <h3>RANGKUMAN AKSI BERDASARKAN DATA DI ATAS</h3>
                     <p>Ringkasan ini mengikuti rekomendasi per tag/campaign yang sedang tampil setelah filter tanggal/akun/platform.</p>
-                    <div className="actionCounts"><MetricBadge label="SCALE — bisa dinaikkan bertahap" value={String(scaleCount)} /><MetricBadge label="TAHAN — tunggu/test kecil" value={String(tahanCount)} /><MetricBadge label="KILL — stop spend" value={String(killCount)} /></div>
-                    <div className="actionNarrative">TAHAN: {tahanCount} tag/campaign jangan discale besar dulu. Lanjut test kecil/tunggu data sampai EPC normal, order, dan Real Rate lebih jelas.</div>
+                    <div className="actionCounts"><MetricBadge label="SCALE — hanya ≥1.5x" value={String(scaleCount)} /><MetricBadge label="HOLD — 1.0–1.49x jangan scale" value={String(holdCount)} /><MetricBadge label="KILL — stop spend" value={String(killCount)} /></div>
+                    <div className="actionNarrative">TAHAN: {holdCount + tahanCount} tag/campaign jangan discale. ROAS 1.0–1.49x tetap HOLD selama masih profit; tunggu EPC normal, order, dan Real Rate lebih jelas.</div>
                     <div className="actionNarrative subtle">Real Rate sebagian kosong: beberapa baris belum punya klik Shopee. Keputusan baris itu masih pakai proxy Meta + komisi.</div>
                   </section>
                 </>
