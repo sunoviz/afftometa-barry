@@ -1372,8 +1372,83 @@ label {
   font-size: 11px;
 }
 
-.resultTableWrap {
+.resultTableWrap,
+.detailProducts {
   overflow: auto;
+}
+
+.attributionRow {
+  cursor: pointer;
+}
+
+.attributionRow:hover,
+.attributionRow.expanded {
+  background: #211b18;
+}
+
+.expandButton {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #ff865f;
+  font-size: 14px;
+}
+
+.attributionDetailRow td {
+  padding: 0 !important;
+  background: #121212;
+}
+
+.attributionDetailPanel {
+  padding: 14px 16px 16px 42px;
+  border-left: 2px solid #9c412d;
+  background: #151515;
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #e4e8ee;
+  font-size: 12px;
+}
+
+.detailHeader span {
+  color: #8e98a5;
+  font-size: 11px;
+}
+
+.detailCampaignGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.detailProducts {
+  overflow: auto;
+  border: 1px solid #303236;
+  border-radius: 8px;
+}
+
+.detailProductsTitle {
+  padding: 8px 10px;
+  color: #aab2be;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.detailProducts table {
+  min-width: 760px;
+}
+
+.detailProducts td,
+.detailProducts th {
+  font-size: 11px;
 }
 
 .resultTableWrap table {

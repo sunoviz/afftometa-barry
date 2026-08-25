@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import {
   BarChart3,
   Calendar,
@@ -283,6 +283,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
   const [minSpendInput, setMinSpendInput] = useState('')
   const [maxSpendInput, setMaxSpendInput] = useState('')
   const [spendFilter, setSpendFilter] = useState<{ min: number; max: number | null }>({ min: 0, max: null })
+  const [expandedTag, setExpandedTag] = useState<string | null>(null)
 
   const sourceShopee = useMemo(() => sourceFilter === 'Semua' ? analysis.shopee : analysis.shopee.filter((row: any) => String(row.platform || 'Others') === sourceFilter), [analysis.shopee, sourceFilter])
   const totals = useMemo(() => {
@@ -431,6 +432,26 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
     if (spendFilter.max !== null && spend > spendFilter.max) return false
     return true
   }), [matchedTags, spendFilter])
+  const attributionDetails = useMemo(() => {
+    const detail = new Map<string, { campaign: any; products: any[] }>()
+    for (const tag of visibleTags as any[]) {
+      const products = new Map<string, any>()
+      for (const row of sourceShopee as any[]) {
+        if ((row.tag || '(no tag)') !== tag.tag) continue
+        const key = String(row.product || 'Produk tanpa nama')
+        const current = products.get(key) || { product: key, category: row.category || 'Tanpa kategori', commission: 0, orders: 0, purchase: 0 }
+        current.commission += Number(row.commission || 0)
+        current.orders += 1
+        current.purchase += Number(row.purchase || 0)
+        products.set(key, current)
+      }
+      detail.set(tag.tag, {
+        campaign: analysis.campaigns.find((item: any) => item.campaign === tag.campaign) || null,
+        products: [...products.values()].sort((a, b) => b.commission - a.commission),
+      })
+    }
+    return detail
+  }, [analysis.campaigns, sourceShopee, visibleTags])
   const scaleCount = visibleTags.filter((item: any) => item.recommendation === 'SCALE').length
   const holdCount = visibleTags.filter((item: any) => item.recommendation === 'HOLD').length
   const tahanCount = visibleTags.filter((item: any) => item.recommendation === 'TAHAN').length
@@ -791,7 +812,27 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                       <table>
                         <thead><tr><th></th><th>TAG (LINK1)</th><th>AKUN</th><th>MATCH</th><th><HelpLabel label="Spend" /></th><th><HelpLabel label="Komisi" /></th><th><HelpLabel label="Net" /></th><th><HelpLabel label="ROAS" /></th><th><HelpLabel label="ROI" /></th><th><HelpLabel label="CPC META" /></th><th><HelpLabel label="EPC" /></th><th>NEW USER</th><th>REKOMENDASI</th><th><HelpLabel label="Orders" /></th><th>AVG/ORDER</th><th><HelpLabel label="REAL CPC" /></th><th><HelpLabel label="REAL RATE" /></th></tr></thead>
                         <tbody>
-                          {visibleTags.map((row: any) => <tr key={row.tag}><td>▸</td><td>{row.tag}</td><td>Akun 1</td><td>{row.campaign || '–'}</td><td>{row.spend ? fmt.format(Math.round(row.spend)) : '–'}</td><td>{fmt.format(Math.round(row.commission || 0))}</td><td>{row.net >= 0 ? `+${fmt.format(Math.round(row.net))}` : fmt.format(Math.round(row.net))}</td><td>{row.roas ? `${row.roas.toFixed(2)}x` : '–'}</td><td>{row.roi ? `${(row.roi * 100).toFixed(1)}%` : '–'}</td><td>{row.metaClicks ? rp(row.spend / row.metaClicks) : '–'}</td><td>{row.metaClicks ? rp(row.commission / row.metaClicks) : '–'}</td><td>{row.newUsers || 0}</td><td><span className={`recommendation ${String(row.recommendation).toLowerCase()}`}>{row.recommendation}</span></td><td>{row.orders || 0}</td><td>{row.orders ? rp(row.avgOrder) : '–'}</td><td>{row.realCpc ? rp(row.realCpc) : '–'}</td><td>{row.realRate !== null ? `${row.realRate.toFixed(1)}%` : '–'}</td></tr>)}
+                          {visibleTags.map((row: any) => {
+                            const isExpanded = expandedTag === row.tag
+                            const detail = attributionDetails.get(row.tag)
+                            return (
+                              <Fragment key={row.tag}>
+                                <tr className={isExpanded ? 'attributionRow expanded' : 'attributionRow'} onClick={() => setExpandedTag(isExpanded ? null : row.tag)}>
+                                  <td><button type="button" className="expandButton" aria-label={`Detail ${row.tag}`}>{isExpanded ? '▾' : '▸'}</button></td>
+                                  <td>{row.tag}</td><td>Akun 1</td><td>{row.campaign || '–'}</td><td>{row.spend ? fmt.format(Math.round(row.spend)) : '–'}</td><td>{fmt.format(Math.round(row.commission || 0))}</td><td>{row.net >= 0 ? `+${fmt.format(Math.round(row.net))}` : fmt.format(Math.round(row.net))}</td><td>{row.roas ? `${row.roas.toFixed(2)}x` : '–'}</td><td>{row.roi ? `${(row.roi * 100).toFixed(1)}%` : '–'}</td><td>{row.metaClicks ? rp(row.spend / row.metaClicks) : '–'}</td><td>{row.metaClicks ? rp(row.commission / row.metaClicks) : '–'}</td><td>{row.newUsers || 0}</td><td><span className={`recommendation ${String(row.recommendation).toLowerCase()}`}>{row.recommendation}</span></td><td>{row.orders || 0}</td><td>{row.orders ? rp(row.avgOrder) : '–'}</td><td>{row.realCpc ? rp(row.realCpc) : '–'}</td><td>{row.realRate !== null ? `${row.realRate.toFixed(1)}%` : '–'}</td>
+                                </tr>
+                                {isExpanded ? <tr className="attributionDetailRow"><td colSpan={17}><div className="attributionDetailPanel">
+                                  <div className="detailHeader"><strong>DETAIL {row.tag}</strong><span>{detail?.products.length || 0} produk · klik baris untuk tutup</span></div>
+                                  <div className="detailCampaignGrid">
+                                    <MetricBadge label="CAMPAIGN META" value={detail?.campaign?.campaign || row.campaign || 'Tidak match'} sub={detail?.campaign ? `${fmt.format(detail.campaign.clicks || 0)} clicks · ${fmt.format(detail.campaign.impressions || 0)} impresi` : 'Belum ada campaign yang cocok'} />
+                                    <MetricBadge label="SPEND CAMPAIGN" value={detail?.campaign ? rp(detail.campaign.spend) : '–'} sub={detail?.campaign ? `CPC ${rp(detail.campaign.cpc || 0)} · CTR ${detail.campaign.impressions ? ((detail.campaign.clicks / detail.campaign.impressions) * 100).toFixed(1) : '0.0'}%` : '–'} />
+                                    <MetricBadge label="KOMISI TAG" value={rp(row.commission)} sub={`${row.orders} orders · ${row.newUsers || 0} new user`} />
+                                  </div>
+                                  <div className="detailProducts"><div className="detailProductsTitle">PRODUK PER TAG</div><table><thead><tr><th>PRODUK</th><th>KATEGORI</th><th>ORDERS</th><th>PEMBELIAN</th><th>KOMISI</th><th>AVG/ITEM</th></tr></thead><tbody>{(detail?.products || []).map((product: any) => <tr key={product.product}><td title={product.product}>{product.product}</td><td>{product.category}</td><td>{product.orders}</td><td>{rp(product.purchase)}</td><td>{rp(product.commission)}</td><td>{rp(product.commission / Math.max(1, product.orders))}</td></tr>)}</tbody></table></div>
+                                </div></td></tr> : null}
+                              </Fragment>
+                            )
+                          })}
                         </tbody>
                       </table>
                     </div>
