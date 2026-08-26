@@ -2,7 +2,7 @@
 import Papa from 'papaparse'
 
 export type MetaRow = { date: string; campaign: string; spend: number; clicks: number; lpViews: number; impressions: number }
-export type ShopeeRow = { orderId: string; status: string; orderDate: string; clickDate: string; product: string; category: string; purchase: number; commission: number; tag: string; platform: string; isNewUser: boolean }
+export type ShopeeRow = { orderId: string; status: string; productStatus: string; orderDate: string; clickDate: string; product: string; category: string; purchase: number; commission: number; tag: string; platform: string; isNewUser: boolean }
 export type ClickRow = { clickId: string; clickDate: string; tag: string; referrer: string }
 export type QualityReport = {
   metaRows: number; metaRowsUsed: number; metaSummaryRowsSkipped: number; metaZeroRowsSkipped: number;
@@ -107,6 +107,7 @@ export function parseShopeeCsv(text: string) {
     return {
       orderId: norm(col(row, 'Order id', 'Order ID', 'ID Pemesanan')),
       status,
+      productStatus: norm(col(row, 'Status Produk Affiliate', 'Affiliate Product Status', 'Product Affiliate Status')) || status,
       orderDate: norm(col(row, 'Order Time', 'Waktu Pemesanan')).slice(0, 10),
       clickDate: norm(col(row, 'Click Time', 'Waktu Klik')).slice(0, 10),
       product: norm(col(row, 'Item Name', 'Nama Barange', 'Nama Barang')),

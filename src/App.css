@@ -1402,30 +1402,30 @@ label {
 }
 
 .attributionDetailPanel {
-  padding: 14px 16px 16px 42px;
-  border-left: 2px solid #9c412d;
+  padding: 10px 14px 14px 42px;
   background: #151515;
 }
 
-.detailHeader {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+.detailMetaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   margin-bottom: 10px;
-  color: #e4e8ee;
+  color: #cfd5de;
   font-size: 12px;
 }
 
-.detailHeader span {
-  color: #8e98a5;
-  font-size: 11px;
+.detailMetaGrid div {
+  display: grid;
+  gap: 4px;
 }
 
-.detailCampaignGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
+.detailMetaGrid strong {
+  color: #f1f3f6;
+}
+
+.detailMetaGrid span {
+  color: #9aa3af;
 }
 
 .detailProducts {
