@@ -149,7 +149,7 @@ label {
 
 .uploadPage {
   min-height: 100vh;
-  padding: 52px 18px 40px;
+  padding: 56px 18px 40px;
 }
 
 .uploadShell {
@@ -384,6 +384,9 @@ label {
 .historyItems {
   display: grid;
   gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .dashedAction {

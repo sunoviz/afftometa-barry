@@ -234,6 +234,15 @@ function makeReferenceRuns(email: string): SavedRun[] {
     ['2026-08-19', '16 rows', '1329 rows'],
     ['2026-08-18', '30 rows', '1509 rows'],
     ['2026-08-17', '375 rows', '21700 rows'],
+    ['2026-08-16', '24 rows', '1011 rows'],
+    ['2026-08-15', '18 rows', '1070 rows'],
+    ['2026-08-14', '22 rows', '969 rows'],
+    ['2026-08-13', '69 rows', '4157 rows'],
+    ['2026-08-12', '18 rows', '1014 rows'],
+    ['2026-08-11', '21 rows', '988 rows'],
+    ['2026-08-10', '115 rows', '10881 rows'],
+    ['2026-08-09', '5 rows', '473 rows'],
+    ['2026-08-08', '5 rows', '610 rows'],
   ]
   return snapshots.map(([date, metaFile, shopeeFile], index) => ({
     ...makeReferenceRun(email),
