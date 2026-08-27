@@ -149,15 +149,13 @@ label {
 
 .uploadPage {
   min-height: 100vh;
-  padding: 22px 18px 40px;
+  padding: 52px 18px 40px;
 }
 
 .uploadShell {
   width: 640px;
   max-width: 100%;
   margin: 0 auto;
-  transform: scale(0.975);
-  transform-origin: top center;
 }
 
 .heroHeader {

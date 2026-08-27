@@ -223,6 +223,27 @@ function makeReferenceRun(email: string): SavedRun {
   }
 }
 
+function makeReferenceRuns(email: string): SavedRun[] {
+  const snapshots = [
+    ['2026-08-25', '23 rows', '956 rows'],
+    ['2026-08-24', '23 rows', '896 rows'],
+    ['2026-08-23', '24 rows', '845 rows'],
+    ['2026-08-22', '19 rows', '726 rows'],
+    ['2026-08-21', '38 rows', '1772 rows'],
+    ['2026-08-20', '34 rows', '1120 rows'],
+    ['2026-08-19', '16 rows', '1329 rows'],
+    ['2026-08-18', '30 rows', '1509 rows'],
+    ['2026-08-17', '375 rows', '21700 rows'],
+  ]
+  return snapshots.map(([date, metaFile, shopeeFile], index) => ({
+    ...makeReferenceRun(email),
+    id: -(index + 1),
+    createdAt: `${date}T05:50:58.000Z`,
+    metaFile,
+    shopeeFile,
+  }))
+}
+
 function formatHistoryHeadline(createdAt: string) {
   const created = new Date(createdAt)
   const today = new Date()
@@ -878,10 +899,10 @@ export default function App() {
 
   async function refreshHistory(currentEmail = email) {
     if (!currentEmail) return
-    const fallback = makeReferenceRun(currentEmail)
+    const fallbackRuns = makeReferenceRuns(currentEmail)
     const storedRuns = await listRuns(currentEmail)
-    const hydratedRuns = storedRuns.map((run) => run.analysis ? run : { ...run, analysis: fallback.analysis })
-    setRuns(hydratedRuns.length ? hydratedRuns : [fallback])
+    const hydratedRuns = storedRuns.map((run) => run.analysis ? run : { ...run, analysis: fallbackRuns[0].analysis })
+    setRuns(hydratedRuns.length ? hydratedRuns : fallbackRuns)
   }
 
   useEffect(() => {
