@@ -568,38 +568,36 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
 
         <section className="dashboardMain">
           <div className="dashboardTopbar">
-            <div>
+            <div className="topbarTitleBlock">
               <h2>{tab === 'overview' ? 'Overview' : tab === 'campaigns' ? 'Campaigns' : tab === 'produk' ? 'Produk & Kategori' : tab === 'funnel' ? 'Funnel Konversi' : tab === 'atribusi' ? 'Atribusi Tag' : 'History'}</h2>
               <div className="dashboardDateText">{tab === 'history' ? 'Snapshot analisa tersimpan · membuka history tidak menggabungkan data' : `Tanggal: ${current?.date || run?.createdAt?.slice(0, 10) || '—'}`}</div>
             </div>
-            {tab !== 'history' ? null : null}
-          </div>
-
-          <div className="toolbarRow">
-            <div className="datePillGroup">
-              <label className="datePill"><input type="date" value={current?.date || ''} readOnly /></label>
-              <span className="dateSep">s/d</span>
-              <label className="datePill"><input type="date" value={current?.date || ''} readOnly /></label>
-            </div>
-            <div className="toolbarButtons">
-              <button type="button" className={historyMode === 'Semua' ? 'pillButton active' : 'pillButton'} onClick={() => setHistoryMode('Semua')}>Semua</button>
-              <button type="button" className={historyMode === 'Terbaru' ? 'pillButton active' : 'pillButton'} onClick={() => setHistoryMode('Terbaru')}>Terbaru</button>
-            </div>
-            <div className="toolbarField compactField">
-              <span>PPN Meta</span>
-              <label className="selectShell">
-                <select value={String(ppn)} onChange={(e) => setPpn(Number(e.target.value))}>
-                  <option value="0">Tanpa PPN</option>
-                  <option value="0.05">5%</option>
-                  <option value="0.1">10%</option>
-                  <option value="0.11">11%</option>
-                </select>
-                <ChevronDown size={14} />
-              </label>
-            </div>
-            <div className="toolbarField targetField">
-              <span>Target/hari</span>
-              <label className="currencyInput"><span>Rp</span><input value={targetPerDay} onChange={(e) => setTargetPerDay(e.target.value)} /></label>
+            <div className="toolbarRow">
+              <div className="datePillGroup">
+                <label className="datePill"><input type="date" value={current?.date || ''} readOnly /></label>
+                <span className="dateSep">s/d</span>
+                <label className="datePill"><input type="date" value={current?.date || ''} readOnly /></label>
+              </div>
+              <div className="toolbarButtons">
+                <button type="button" className={historyMode === 'Semua' ? 'pillButton active' : 'pillButton'} onClick={() => setHistoryMode('Semua')}>Semua</button>
+                <button type="button" className={historyMode === 'Terbaru' ? 'pillButton active' : 'pillButton'} onClick={() => setHistoryMode('Terbaru')}>Terbaru</button>
+              </div>
+              <div className="toolbarField compactField">
+                <span>PPN Meta</span>
+                <label className="selectShell">
+                  <select value={String(ppn)} onChange={(e) => setPpn(Number(e.target.value))}>
+                    <option value="0">Tanpa PPN</option>
+                    <option value="0.05">5%</option>
+                    <option value="0.1">10%</option>
+                    <option value="0.11">11%</option>
+                  </select>
+                  <ChevronDown size={14} />
+                </label>
+              </div>
+              <div className="toolbarField targetField">
+                <span>Target/hari</span>
+                <label className="currencyInput"><span>Rp</span><input value={targetPerDay} onChange={(e) => setTargetPerDay(e.target.value)} /></label>
+              </div>
             </div>
           </div>
 

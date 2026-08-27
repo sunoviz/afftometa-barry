@@ -506,14 +506,14 @@ label {
 
 .dashboardLayout {
   display: grid;
-  grid-template-columns: 192px 1fr;
+  grid-template-columns: 200px 1fr;
   min-height: 100vh;
 }
 
 .dashboardSidebar {
-  background: #181818;
+  background: #1a1a1a;
   border-right: 1px solid #2a2a2a;
-  padding: 12px 0 12px;
+  padding: 0;
   display: flex;
   flex-direction: column;
 }
@@ -590,15 +590,21 @@ label {
 }
 
 .dashboardMain {
-  padding: 18px 20px 16px;
+  padding: 24px 28px 16px;
 }
 
 .dashboardTopbar {
+  min-height: 44px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 8px;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.topbarTitleBlock {
+  width: 174px;
+  flex: 0 0 174px;
 }
 
 .dashboardTopbar h2 {
@@ -615,11 +621,12 @@ label {
 }
 
 .toolbarRow {
-  display: grid;
-  grid-template-columns: auto auto auto auto;
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
   gap: 10px;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 .datePillGroup {
@@ -744,8 +751,8 @@ label {
 }
 
 .trafficPanel {
-  padding: 7px 9px;
-  margin-bottom: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
 }
 
 .trafficPanelHeader {
@@ -761,6 +768,8 @@ label {
 .trafficPanelBody {
   margin-top: 8px;
   display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
   gap: 8px;
 }
 
@@ -795,6 +804,10 @@ label {
   font-size: 13px;
 }
 
+.platformRow {
+  grid-column: 1 / -1;
+}
+
 .platformRow span {
   color: #838b97;
   font-size: 12px;
@@ -825,8 +838,8 @@ label {
 }
 
 .summaryStrip {
-  padding: 7px 9px;
-  margin-bottom: 16px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
 }
 
 .summaryHeadline {
@@ -875,16 +888,17 @@ label {
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 19px;
 }
 
 .resultKpi {
-  border-radius: 12px;
+  min-height: 117px;
+  border-radius: 6px;
   border: 1px solid #303236;
   background: #1a1a1a;
-  padding: 12px;
+  padding: 15px 16px;
 }
 
 .kpiLabel {
@@ -942,12 +956,13 @@ label {
 .chartGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .chartPanel {
-  padding: 10px;
+  min-height: 263px;
+  padding: 16px;
 }
 
 .chartPanel h3,
@@ -980,7 +995,7 @@ label {
 
 .barChartArea,
 .netChartArea {
-  height: 152px;
+  height: 200px;
   display: flex;
   align-items: flex-end;
   gap: 14px;
