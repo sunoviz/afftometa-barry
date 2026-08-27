@@ -164,8 +164,21 @@ export function analyze(metaText: string, shopeeText: string, ppn = 0.11, clickT
   const lpViews = meta.reduce((a, r) => a + r.lpViews, 0)
   const impressions = meta.reduce((a, r) => a + r.impressions, 0)
   const byDate = new Map<string, any>()
-  for (const r of meta) { const o = byDate.get(r.date) || { date: r.date, spend: 0, commission: 0, orders: 0 }; o.spend += r.spend; byDate.set(r.date, o) }
-  for (const r of shopee) { const d = r.orderDate || r.clickDate; const o = byDate.get(d) || { date: d, spend: 0, commission: 0, orders: 0 }; o.commission += r.commission; o.orders += 1; byDate.set(d, o) }
+  for (const r of meta) {
+    const o = byDate.get(r.date) || { date: r.date, spend: 0, commission: 0, orders: 0, clicks: 0, lpViews: 0, impressions: 0 }
+    o.spend += r.spend
+    o.clicks += r.clicks
+    o.lpViews += r.lpViews
+    o.impressions += r.impressions
+    byDate.set(r.date, o)
+  }
+  for (const r of shopee) {
+    const d = r.orderDate || r.clickDate
+    const o = byDate.get(d) || { date: d, spend: 0, commission: 0, orders: 0, clicks: 0, lpViews: 0, impressions: 0 }
+    o.commission += r.commission
+    o.orders += 1
+    byDate.set(d, o)
+  }
   const daily = [...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date)).map(r => ({ ...r, net: r.commission - r.spend * (1+ppn), roas: r.spend ? r.commission/(r.spend*(1+ppn)) : 0 }))
   const campaignMap = new Map<string, any>()
   for (const r of meta) { const o = campaignMap.get(r.campaign) || { campaign: r.campaign, spend: 0, clicks: 0, lpViews: 0, impressions: 0 }; o.spend += r.spend; o.clicks += r.clicks; o.lpViews += r.lpViews; o.impressions += r.impressions; campaignMap.set(r.campaign, o) }
