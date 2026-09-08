@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.mjs": {
+      "maxDuration": 60,
+      "includeFiles": "server/*.html"
+    }
+  },
+  "routes": [
+    {
+      "src": "^/(|index\\.html|login|logout)$",
+      "dest": "/api/index?route=/$1"
+    },
+    {
+      "src": "^/api/(history/days|snapshots|snapshots/[0-9]+)$",
+      "dest": "/api/index?route=/api/$1"
+    },
+    {
+      "handle": "filesystem"
+    }
+  ]
+}

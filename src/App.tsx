@@ -1,13 +1,12 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import Papa from 'papaparse'
 import {
   BarChart3,
   Calendar,
   ChevronDown,
-  Coffee,
   Download,
   FileSpreadsheet,
   Filter,
-  Heart,
   HelpCircle,
   LayoutDashboard,
   Menu,
@@ -17,9 +16,7 @@ import {
   Upload,
 } from 'lucide-react'
 import { analyze, type Analysis } from './lib/parser'
-import { listRuns, saveRun, type SavedRun } from './lib/history'
-import sampleMetaCsv from '../public/sample/meta.csv?raw'
-import sampleShopeeCsv from '../public/sample/shopee.csv?raw'
+import { listRuns, saveRuns, type SavedRun } from './lib/history'
 import './App.css'
 
 type GuideStepId = 'persiapan' | 'meta' | 'shopee' | 'dashboard' | 'atribusi'
@@ -36,12 +33,14 @@ type WorkspaceState = {
 
 type SidebarTab = 'overview' | 'campaigns' | 'produk' | 'funnel' | 'atribusi' | 'history'
 
-const APP_NAME = 'Satruk Affiliate Tracker'
+const APP_NAME = 'Barry Affiliate Tracker'
 const APP_SUBTITLE = 'Shopee × Meta Ads History Tracker'
-const FOOTER_TEXT = '© 2026 Satruk Affiliate Tracker — private server build'
+const FOOTER_TEXT = '© 2026 Barry Affiliate Tracker — private server build'
+const ALLOWED_EMAILS = new Set(['barry@gmail.com', 'fadli@gmail.com'])
 const fmt = new Intl.NumberFormat('id-ID')
 const rp = (n: number) => `Rp ${fmt.format(Math.round(n || 0))}`
 const DONUT_COLORS = ['#e15c38', '#2ea66f', '#22a7a7', '#4f83e3', '#8d63d8', '#b98234', '#667a2e', '#d8b24f']
+const platformGroup = (platform: string) => /facebook|instagram|threads|website/i.test(platform) ? 'sosmed' : 'organic'
 function makeDonut<T extends Record<string, any>>(rows: T[], valueKey: keyof T) {
   const total = rows.reduce((sum, row) => sum + Number(row[valueKey] || 0), 0) || 1
   let cursor = 0
@@ -198,59 +197,28 @@ function GuideModal({ active, onClose, step, setStep }: { active: boolean; onClo
   )
 }
 
-function makeWorkspace(): WorkspaceState {
+function makeWorkspace(id = 1): WorkspaceState {
   return {
-    id: 1,
+    id,
     name: '',
     metaFileName: '',
     metaFile: null,
-    shopeeAccounts: [{ id: 1, name: '', fileName: '', file: null }],
+    shopeeAccounts: [{ id, name: '', fileName: '', file: null }],
     clickFileName: '',
     clickFile: null,
   }
 }
 
-function makeReferenceRun(email: string): SavedRun {
-  return {
-    id: 0,
-    email,
-    name: 'Kemarin',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    metaFile: '19 rows',
-    shopeeFile: '726 rows',
-    ppn: 0,
-    analysis: analyze(sampleMetaCsv, sampleShopeeCsv, 0),
+function mergeCsvTexts(texts: string[]) {
+  const records: Array<Record<string, unknown>> = []
+  const fields: string[] = []
+  for (const textValue of texts) {
+    const parsed = Papa.parse<Record<string, unknown>>(textValue.replace(/^\uFEFF/, ''), { header: true, skipEmptyLines: true, transformHeader: (header) => header.trim() })
+    if (parsed.errors.length) throw new Error(`CSV tidak valid: ${parsed.errors[0].message}`)
+    for (const field of parsed.meta.fields || []) if (!fields.includes(field)) fields.push(field)
+    records.push(...parsed.data)
   }
-}
-
-function makeReferenceRuns(email: string): SavedRun[] {
-  const snapshots = [
-    ['2026-08-25', '23 rows', '956 rows'],
-    ['2026-08-24', '23 rows', '896 rows'],
-    ['2026-08-23', '24 rows', '845 rows'],
-    ['2026-08-22', '19 rows', '726 rows'],
-    ['2026-08-21', '38 rows', '1772 rows'],
-    ['2026-08-20', '34 rows', '1120 rows'],
-    ['2026-08-19', '16 rows', '1329 rows'],
-    ['2026-08-18', '30 rows', '1509 rows'],
-    ['2026-08-17', '375 rows', '21700 rows'],
-    ['2026-08-16', '24 rows', '1011 rows'],
-    ['2026-08-15', '18 rows', '1070 rows'],
-    ['2026-08-14', '22 rows', '969 rows'],
-    ['2026-08-13', '69 rows', '4157 rows'],
-    ['2026-08-12', '18 rows', '1014 rows'],
-    ['2026-08-11', '21 rows', '988 rows'],
-    ['2026-08-10', '115 rows', '10881 rows'],
-    ['2026-08-09', '5 rows', '473 rows'],
-    ['2026-08-08', '5 rows', '610 rows'],
-  ]
-  return snapshots.map(([date, metaFile, shopeeFile], index) => ({
-    ...makeReferenceRun(email),
-    id: -(index + 1),
-    createdAt: `${date}T05:50:58.000Z`,
-    metaFile,
-    shopeeFile,
-  }))
+  return Papa.unparse(records, { columns: fields })
 }
 
 function formatHistoryHeadline(createdAt: string) {
@@ -306,26 +274,48 @@ function MetricBadge({ label, value, sub }: { label: string; value: string; sub?
 
 function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory }: { analysis: Analysis; onBack: () => void; run?: SavedRun | null; runs: SavedRun[]; onOpenRun: (run: SavedRun) => void; onRefreshHistory: () => void }) {
   const [tab, setTab] = useState<SidebarTab>('overview')
-  const [ppn, setPpn] = useState(0)
+  const [ppn, setPpn] = useState(run?.ppn ?? analysis.totals.ppn ?? 0)
   const [targetPerDay, setTargetPerDay] = useState('500.000')
-  const [historyMode, setHistoryMode] = useState<'Semua' | 'Terbaru'>('Semua')
-  const [sourceFilter, setSourceFilter] = useState('Semua')
+  const availableDates = useMemo(() => [...analysis.meta.flatMap((row) => [row.date, row.endDate]), ...analysis.shopee.map((row) => row.orderDate || row.clickDate)].filter(Boolean).sort(), [analysis])
+  const firstDate = availableDates[0] || ''
+  const lastDate = availableDates[availableDates.length - 1] || ''
+  const availablePlatforms = useMemo(() => [...new Set(analysis.shopee.map((row) => String(row.platform || 'Others').trim() || 'Others'))], [analysis])
+  const [activePlatforms, setActivePlatforms] = useState<Set<string>>(() => new Set(availablePlatforms))
+  const [dateStart, setDateStart] = useState(firstDate)
+  const [dateEnd, setDateEnd] = useState(lastDate)
   const [minSpendInput, setMinSpendInput] = useState('')
   const [maxSpendInput, setMaxSpendInput] = useState('')
   const [spendFilter, setSpendFilter] = useState<{ min: number; max: number | null }>({ min: 0, max: null })
   const [expandedTag, setExpandedTag] = useState<string | null>(null)
 
-  const sourceShopee = useMemo(() => sourceFilter === 'Semua' ? analysis.shopee : analysis.shopee.filter((row: any) => String(row.platform || 'Others') === sourceFilter), [analysis.shopee, sourceFilter])
+  useEffect(() => {
+    setActivePlatforms(new Set(availablePlatforms))
+    setDateStart(firstDate)
+    setDateEnd(lastDate)
+    setPpn(run?.ppn ?? analysis.totals.ppn ?? 0)
+  }, [analysis, availablePlatforms, firstDate, lastDate, run?.ppn])
+
+  const filteredMeta = useMemo(() => analysis.meta.filter((row) => {
+    const rowStart = row.date
+    const rowEnd = row.endDate || row.date
+    return (!dateStart || rowEnd >= dateStart) && (!dateEnd || rowStart <= dateEnd)
+  }), [analysis.meta, dateEnd, dateStart])
+  const sourceShopee = useMemo(() => analysis.shopee.filter((row) => {
+    const date = row.orderDate || row.clickDate
+    return activePlatforms.has(String(row.platform || 'Others')) && (!dateStart || date >= dateStart) && (!dateEnd || date <= dateEnd)
+  }), [activePlatforms, analysis.shopee, dateEnd, dateStart])
+  const filteredClickRows = useMemo(() => analysis.clicks.filter((row) => (!dateStart || row.clickDate >= dateStart) && (!dateEnd || row.clickDate <= dateEnd)), [analysis.clicks, dateEnd, dateStart])
   const totals = useMemo(() => {
-    const spend = analysis.totals.spend || 0
+    const spend = filteredMeta.reduce((sum, item) => sum + Number(item.spend || 0), 0)
     const commission = sourceShopee.reduce((sum: number, item: any) => sum + Number(item.commission || 0), 0)
     const orderIds = new Set(sourceShopee.map((item: any) => item.orderId).filter(Boolean))
     const spendPpn = spend * (1 + ppn)
     const net = commission - spendPpn
     const roas = spendPpn > 0 ? commission / spendPpn : 0
     const roi = spendPpn > 0 ? net / spendPpn : 0
-    const clicks = analysis.totals.clicks || 0
-    const lpViews = analysis.totals.lpViews || 0
+    const clicks = filteredMeta.reduce((sum, item) => sum + Number(item.clicks || 0), 0)
+    const lpViews = filteredMeta.reduce((sum, item) => sum + Number(item.lpViews || 0), 0)
+    const impressions = filteredMeta.reduce((sum, item) => sum + Number(item.impressions || 0), 0)
     const orders = orderIds.size || sourceShopee.length
     const zeroItems = sourceShopee.filter((item: any) => Number(item.commission || 0) <= 0).length
     const totalItems = sourceShopee.length || 1
@@ -334,27 +324,35 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
     const cpc = clicks > 0 ? spendPpn / clicks : 0
     const lpRate = clicks > 0 ? (lpViews / clicks) * 100 : 0
     const targetRaw = Number(targetPerDay.replace(/\./g, '')) || 0
-    return { spendPpn, commission, net, roas, roi, clicks, lpViews, orders, zeroItems, totalItems, zeroPct, commissionPerOrder, cpc, lpRate, targetRaw }
-  }, [analysis, ppn, targetPerDay, sourceShopee])
+    return { spendPpn, commission, net, roas, roi, clicks, lpViews, impressions, orders, zeroItems, totalItems, zeroPct, commissionPerOrder, cpc, lpRate, targetRaw }
+  }, [filteredMeta, ppn, targetPerDay, sourceShopee])
 
   const dailyRows = useMemo(() => {
-    const shopeeByDate = new Map<string, { commission: number; orderIds: Set<string>; itemCount: number; zeroCommissionCount: number }>()
+    const byDate = new Map<string, any>()
+    for (const item of filteredMeta) {
+      if (item.rangeDays > 1) continue
+      const current = byDate.get(item.date) || { date: item.date, spend: 0, commission: 0, orderIds: new Set<string>(), itemCount: 0, zeroCommissionCount: 0, clicks: 0, lpViews: 0, impressions: 0 }
+      current.spend += Number(item.spend || 0)
+      current.clicks += Number(item.clicks || 0)
+      current.lpViews += Number(item.lpViews || 0)
+      current.impressions += Number(item.impressions || 0)
+      byDate.set(item.date, current)
+    }
     for (const item of sourceShopee as any[]) {
       const date = item.orderDate || item.clickDate || '—'
-      const current = shopeeByDate.get(date) || { commission: 0, orderIds: new Set<string>(), itemCount: 0, zeroCommissionCount: 0 }
+      const current = byDate.get(date) || { date, spend: 0, commission: 0, orderIds: new Set<string>(), itemCount: 0, zeroCommissionCount: 0, clicks: 0, lpViews: 0, impressions: 0 }
       current.commission += Number(item.commission || 0)
       if (item.orderId) current.orderIds.add(String(item.orderId))
       current.itemCount += 1
       if (Number(item.commission || 0) <= 0) current.zeroCommissionCount += 1
-      shopeeByDate.set(date, current)
+      byDate.set(date, current)
     }
-    return analysis.daily.map((row: any) => {
+    return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).map((row: any) => {
       const spend = Number(row.spend || 0)
-      const source = shopeeByDate.get(row.date)
-      const commission = source?.commission || 0
-      const orders = source?.orderIds.size || 0
-      const itemCount = source?.itemCount || 0
-      const zeroCommissionCount = source?.zeroCommissionCount || 0
+      const commission = row.commission || 0
+      const orders = row.orderIds.size || 0
+      const itemCount = row.itemCount || 0
+      const zeroCommissionCount = row.zeroCommissionCount || 0
       const spendPpn = spend * (1 + ppn)
       const net = commission - spendPpn
       const roas = spendPpn > 0 ? commission / spendPpn : 0
@@ -364,7 +362,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
       const zeroPct = itemCount > 0 ? (zeroCommissionCount / itemCount) * 100 : 0
       return { ...row, commission, orders, itemCount, zeroCommissionCount, spendPpn, net, roas, roi, epc, lpRate, zeroPct }
     })
-  }, [analysis.daily, ppn, sourceShopee])
+  }, [filteredMeta, ppn, sourceShopee])
 
   const current = dailyRows[dailyRows.length - 1] || null
   const allPlatformCounts = useMemo(() => {
@@ -424,20 +422,35 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
     }
     return [...map.values()].sort((a, b) => b.commission - a.commission).slice(0, 15)
   }, [sourceShopee])
+  const campaignRows = useMemo(() => {
+    const map = new Map<string, any>()
+    for (const row of filteredMeta) {
+      const current = map.get(row.campaign) || { campaign: row.campaign, spend: 0, clicks: 0, lpViews: 0, impressions: 0, days: new Set<string>() }
+      current.spend += row.spend
+      current.clicks += row.clicks
+      current.lpViews += row.lpViews
+      current.impressions += row.impressions
+      current.days.add(row.date)
+      map.set(row.campaign, current)
+    }
+    return [...map.values()].map((row) => ({ ...row, activeDays: row.days.size, cpc: row.clicks ? row.spend / row.clicks : 0, lpRate: row.clicks ? row.lpViews / row.clicks : 0 })).sort((a, b) => b.spend - a.spend)
+  }, [filteredMeta])
   const matchedTags = useMemo(() => {
-    const sourceTags = new Map<string, { tag: string; commission: number; orders: number; purchase: number; newUsers: number }>()
+    const sourceTags = new Map<string, { tag: string; commission: number; orderIds: Set<string>; purchase: number; newUsers: number }>()
     for (const row of sourceShopee as any[]) {
       const tag = row.tag || '(no tag)'
-      const current = sourceTags.get(tag) || { tag, commission: 0, orders: 0, purchase: 0, newUsers: 0 }
+      const current = sourceTags.get(tag) || { tag, commission: 0, orderIds: new Set<string>(), purchase: 0, newUsers: 0 }
       current.commission += Number(row.commission || 0)
       current.purchase += Number(row.purchase || 0)
-      current.orders += 1
+      if (row.orderId) current.orderIds.add(String(row.orderId))
       if (row.isNewUser) current.newUsers += 1
       sourceTags.set(tag, current)
     }
     return [...sourceTags.values()].map((tag: any) => {
+      const orders = tag.orderIds.size
       const base = analysis.tags.find((item: any) => item.tag === tag.tag) || tag
-      const spend = Number(base.spend || 0)
+      const campaign = campaignRows.find((item: any) => item.campaign === base.campaign)
+      const spend = Number(campaign?.spend || 0)
       const net = tag.commission - spend * (1 + ppn)
       const roas = spend > 0 ? tag.commission / (spend * (1 + ppn)) : 0
       const roi = spend > 0 ? net / (spend * (1 + ppn)) : 0
@@ -445,17 +458,20 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
       return {
         ...base,
         ...tag,
+        orders,
         spend,
         net,
         roas,
         roi,
         recommendation: status,
-        avgOrder: tag.orders ? tag.commission / tag.orders : 0,
-        realRate: base.clickCount ? (tag.orders / base.clickCount) * 100 : null,
-        realCpc: base.clickCount ? spend / base.clickCount : null,
+        avgOrder: orders ? tag.commission / orders : 0,
+        metaClicks: campaign?.clicks || 0,
+        clickCount: filteredClickRows.filter((item) => item.tag === tag.tag).length,
+        realRate: campaign?.clicks ? (filteredClickRows.filter((item) => item.tag === tag.tag).length / campaign.clicks) * 100 : null,
+        realCpc: filteredClickRows.some((item) => item.tag === tag.tag) ? spend / filteredClickRows.filter((item) => item.tag === tag.tag).length : null,
       }
     }).sort((a: any, b: any) => b.commission - a.commission)
-  }, [analysis.tags, ppn, sourceShopee])
+  }, [analysis.tags, campaignRows, filteredClickRows, ppn, sourceShopee])
   const visibleTags = useMemo(() => matchedTags.filter((item: any) => {
     const spend = Number(item.spend || 0)
     if (spend < spendFilter.min) return false
@@ -508,10 +524,10 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
   const maxSpendCommission = Math.max(...charts.map((x) => x.value), 1)
   const maxNet = Math.max(...dailyRows.map((x: any) => Math.abs(x.net)), 1)
 
-  const visibleRuns = historyMode === 'Terbaru' ? runs.slice(0, 1) : runs
+  const visibleRuns = runs
   const funnelRows = [
-    { label: 'Impresi', value: analysis.totals.impressions || 0, pct: 100, sub: 'Tayangan iklan Meta', tone: 'gray' },
-    { label: 'Link Clicks', value: totals.clicks, pct: analysis.totals.impressions ? (totals.clicks / analysis.totals.impressions) * 100 : 0, sub: 'Klik iklan (Meta)', tone: 'red' },
+    { label: 'Impresi', value: totals.impressions || 0, pct: 100, sub: 'Tayangan iklan Meta', tone: 'gray' },
+    { label: 'Link Clicks', value: totals.clicks, pct: totals.impressions ? (totals.clicks / totals.impressions) * 100 : 0, sub: 'Klik iklan (Meta)', tone: 'red' },
     { label: 'Landing Page Views', value: totals.lpViews, pct: totals.clicks ? (totals.lpViews / totals.clicks) * 100 : 0, sub: 'Pixel load berhasil (Meta)', tone: 'amber' },
     { label: 'Unique Orders', value: totals.orders, pct: totals.clicks ? (totals.orders / totals.clicks) * 100 : 0, sub: 'Pesanan di Shopee (by order date)', tone: 'green' },
   ]
@@ -560,7 +576,6 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
             <button type="button" className={tab === 'history' ? 'sidebarLink active' : 'sidebarLink'} onClick={() => setTab('history')}><Calendar size={15} />History</button>
           </nav>
           <div className="sidebarActions">
-            <button type="button" className="coffeeButton"><Heart size={13} />Traktir kopi developer <Coffee size={13} /></button>
             <button type="button" className="sidebarAction" onClick={exportDailyCsv}><Download size={15} />Export Excel</button>
             <button type="button" className="sidebarAction" onClick={onBack}><Upload size={15} />Ganti file</button>
           </div>
@@ -570,17 +585,17 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
           <div className="dashboardTopbar">
             <div className="topbarTitleBlock">
               <h2>{tab === 'overview' ? 'Overview' : tab === 'campaigns' ? 'Campaigns' : tab === 'produk' ? 'Produk & Kategori' : tab === 'funnel' ? 'Funnel Konversi' : tab === 'atribusi' ? 'Atribusi Tag' : 'History'}</h2>
-              <div className="dashboardDateText">{tab === 'history' ? 'Snapshot analisa tersimpan · membuka history tidak menggabungkan data' : `Tanggal: ${current?.date || run?.createdAt?.slice(0, 10) || '—'}`}</div>
+              <div className="dashboardDateText">{run?.name ? `${run.name} · ` : ''}{tab === 'history' ? 'Snapshot analisa tersimpan · membuka history tidak menggabungkan data' : `Tanggal: ${current?.date || run?.createdAt?.slice(0, 10) || '—'}`}</div>
             </div>
             <div className="toolbarRow">
               <div className="datePillGroup">
-                <label className="datePill"><input type="date" value={current?.date || ''} readOnly /></label>
+                <label className="datePill"><input type="date" value={dateStart} min={firstDate} max={dateEnd || lastDate} onChange={(event) => setDateStart(event.target.value)} /></label>
                 <span className="dateSep">s/d</span>
-                <label className="datePill"><input type="date" value={current?.date || ''} readOnly /></label>
+                <label className="datePill"><input type="date" value={dateEnd} min={dateStart || firstDate} max={lastDate} onChange={(event) => setDateEnd(event.target.value)} /></label>
               </div>
               <div className="toolbarButtons">
-                <button type="button" className={historyMode === 'Semua' ? 'pillButton active' : 'pillButton'} onClick={() => setHistoryMode('Semua')}>Semua</button>
-                <button type="button" className={historyMode === 'Terbaru' ? 'pillButton active' : 'pillButton'} onClick={() => setHistoryMode('Terbaru')}>Terbaru</button>
+                <button type="button" className={dateStart === firstDate && dateEnd === lastDate ? 'pillButton active' : 'pillButton'} onClick={() => { setDateStart(firstDate); setDateEnd(lastDate) }}>Semua</button>
+                <button type="button" className={dateStart === lastDate && dateEnd === lastDate ? 'pillButton active' : 'pillButton'} onClick={() => { setDateStart(lastDate); setDateEnd(lastDate) }}>Terbaru</button>
               </div>
               <div className="toolbarField compactField">
                 <span>PPN Meta</span>
@@ -628,11 +643,26 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                 <div className="trafficPanelHeader"><Filter size={14} />FILTER SUMBER TRAFIK</div>
                 <div className="trafficPanelBody">
                   <div className="trafficFilters">
-                    <button type="button" className={sourceFilter === 'Semua' ? 'sourceChip active' : 'sourceChip'} onClick={() => setSourceFilter('Semua')}>Semua</button>
-                    {allPlatformCounts[0] ? <button type="button" className={sourceFilter === allPlatformCounts[0][0] ? 'sourceChip active' : 'sourceChip'} onClick={() => setSourceFilter(allPlatformCounts[0][0])}>{allPlatformCounts[0][0]}</button> : null}
+                    <button type="button" className={activePlatforms.size === availablePlatforms.length ? 'sourceChip active' : 'sourceChip'} onClick={() => setActivePlatforms(new Set(availablePlatforms))}><i className="filterDot all" />Semua</button>
+                    {(['sosmed', 'organic'] as const).map((group) => {
+                      const groupPlatforms = availablePlatforms.filter((name) => platformGroup(name) === group)
+                      if (!groupPlatforms.length) return null
+                      const allActive = groupPlatforms.every((name) => activePlatforms.has(name))
+                      return <button key={group} type="button" className={allActive ? `sourceChip active ${group}` : 'sourceChip'} onClick={() => setActivePlatforms((current) => {
+                        const next = new Set(current)
+                        if (allActive && current.size > groupPlatforms.length) groupPlatforms.forEach((name) => next.delete(name))
+                        else groupPlatforms.forEach((name) => next.add(name))
+                        return next
+                      })}><i className={`filterDot ${group}`} />{group === 'sosmed' ? 'Social Media' : 'Organik'}</button>
+                    })}
                   </div>
                   <div className="trafficSummary">{trafficLabel}</div>
-                  <div className="platformRow"><span>Per platform:</span>{allPlatformCounts.map(([name, count]) => <button key={name} type="button" className={sourceFilter === name ? 'platformChip active' : 'platformChip'} onClick={() => setSourceFilter(name)}>{name} <strong>{count}</strong></button>)}</div>
+                  <div className="platformRow"><span>Per platform:</span>{allPlatformCounts.map(([name, count]) => <button key={name} type="button" className={activePlatforms.has(name) ? `platformChip active ${platformGroup(name)}` : 'platformChip'} onClick={() => setActivePlatforms((current) => {
+                    const next = new Set(current)
+                    if (next.has(name) && next.size > 1) next.delete(name)
+                    else next.add(name)
+                    return next
+                  })}><i className={`filterDot ${platformGroup(name)}`} />{name} <strong>{count}</strong></button>)}</div>
                 </div>
               </div>
 
@@ -642,7 +672,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
               {current ? (
                 <div className="summaryStrip">
                   <div className="summaryHeadline">{current.date} · Net {rp(totals.net)} / target {rp(totals.targetRaw)}</div>
-                  <div className={targetPct >= 100 ? 'summaryProgress positive' : 'summaryProgress'}>{targetPct}%</div>
+                  <div className={targetPct >= 100 ? 'summaryProgress positive' : 'summaryProgress'}>{targetPctCapped}%</div>
                   <div className="targetProgressTrack"><div className={targetPct >= 100 ? 'targetProgressBar positive' : 'targetProgressBar'} style={{ width: `${targetPctCapped}%` }} /></div>
                   <div className="summaryMeta">
                     <span>Spend: <strong>{rp(current.spendPpn)}</strong></span>
@@ -759,8 +789,8 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
                         <tr><th>CAMPAIGN</th><th>SPEND</th><th>CLICKS</th><th>LP VIEWS</th><th>LP RATE</th><th>CTR</th><th>CPC (RP)</th><th>CPM (RP)</th><th>HARI</th></tr>
                       </thead>
                       <tbody>
-                        {analysis.campaigns.map((row: any) => (
-                          <tr key={row.campaign}><td>{row.campaign}</td><td>{fmt.format(Math.round(row.spend))}</td><td>{fmt.format(row.clicks || 0)}</td><td>{fmt.format(row.lpViews || 0)}</td><td>{((row.lpRate || 0) * 100).toFixed(1)}%</td><td>{row.impressions ? `${((row.clicks / row.impressions) * 100).toFixed(1)}%` : '0.0%'}</td><td>{fmt.format(Math.round(row.cpc || 0))}</td><td>{row.impressions ? fmt.format(Math.round((row.spend / row.impressions) * 1000)) : '0'}</td><td>{dailyRows.length}</td></tr>
+                          {campaignRows.map((row: any) => (
+                            <tr key={row.campaign}><td>{row.campaign}</td><td>{fmt.format(Math.round(row.spend))}</td><td>{fmt.format(row.clicks || 0)}</td><td>{fmt.format(row.lpViews || 0)}</td><td>{((row.lpRate || 0) * 100).toFixed(1)}%</td><td>{row.impressions ? `${((row.clicks / row.impressions) * 100).toFixed(1)}%` : '0.0%'}</td><td>{fmt.format(Math.round(row.cpc || 0))}</td><td>{row.impressions ? fmt.format(Math.round((row.spend / row.impressions) * 1000)) : '0'}</td><td>{row.activeDays}</td></tr>
                         ))}
                       </tbody>
                     </table>
@@ -896,7 +926,7 @@ function ResultScreen({ analysis, onBack, run, runs, onOpenRun, onRefreshHistory
 export default function App() {
   const [emailInput, setEmailInput] = useState('')
   const [email, setEmail] = useState('')
-  const [workspace, setWorkspace] = useState<WorkspaceState>(makeWorkspace())
+  const [workspaces, setWorkspaces] = useState<WorkspaceState[]>([makeWorkspace()])
   const [runs, setRuns] = useState<SavedRun[]>([])
   const [error, setError] = useState('')
   const [guideOpen, setGuideOpen] = useState(false)
@@ -906,15 +936,13 @@ export default function App() {
 
   async function refreshHistory(currentEmail = email) {
     if (!currentEmail) return
-    const fallbackRuns = makeReferenceRuns(currentEmail)
     const storedRuns = await listRuns(currentEmail)
-    const hydratedRuns = storedRuns.map((run) => run.analysis ? run : { ...run, analysis: fallbackRuns[0].analysis })
-    setRuns(hydratedRuns.length ? hydratedRuns : fallbackRuns)
+    setRuns(storedRuns.filter((run) => Boolean(run.analysis)))
   }
 
   useEffect(() => {
     const savedEmail = window.localStorage.getItem('afftometa_email') || ''
-    if (savedEmail) {
+    if (ALLOWED_EMAILS.has(savedEmail)) {
       setEmail(savedEmail)
       setEmailInput(savedEmail)
       void refreshHistory(savedEmail)
@@ -923,21 +951,19 @@ export default function App() {
 
   useEffect(() => {
     function restoreFromHash() {
-      if (window.location.hash !== '#dashboard') return
+      const savedEmail = window.localStorage.getItem('afftometa_email') || ''
+      if (window.location.hash !== '#dashboard' || !ALLOWED_EMAILS.has(savedEmail)) return
       const stored = window.sessionStorage.getItem('afftometa_active_run')
       if (stored) {
         try {
           const parsed = JSON.parse(stored) as SavedRun
-          if (parsed.analysis) {
+          if (parsed.analysis && parsed.email === savedEmail) {
             setActiveRun(parsed)
             setAnalysis(parsed.analysis)
             return
           }
         } catch {}
       }
-      const fallback = makeReferenceRun(email || window.localStorage.getItem('afftometa_email') || 'barry@gmail.com')
-      setActiveRun(fallback)
-      setAnalysis(fallback.analysis)
     }
     restoreFromHash()
     window.addEventListener('hashchange', restoreFromHash)
@@ -950,6 +976,10 @@ export default function App() {
       setError('Masukkan email yang sudah di-whitelist.')
       return
     }
+    if (!ALLOWED_EMAILS.has(normalized)) {
+      setError('Email ini belum terdaftar di whitelist.')
+      return
+    }
     setError('')
     setEmail(normalized)
     window.localStorage.setItem('afftometa_email', normalized)
@@ -957,8 +987,8 @@ export default function App() {
   }
 
   function openRun(run: SavedRun) {
-    const fallback = makeReferenceRun(email || run.email || 'barry@gmail.com')
-    const analysisSnapshot = run.analysis || fallback.analysis
+    if (!run.analysis) return
+    const analysisSnapshot = run.analysis
     setError('')
     const hydratedRun = { ...run, analysis: analysisSnapshot }
     window.sessionStorage.setItem('afftometa_active_run', JSON.stringify(hydratedRun))
@@ -969,37 +999,43 @@ export default function App() {
 
   async function handleAnalyze() {
     try {
-      if (!workspace.metaFile) throw new Error('Upload Meta CSV dulu.')
-      const shopeeFiles = workspace.shopeeAccounts.filter((x) => x.file).map((x) => x.file as File)
-      if (!shopeeFiles.length) throw new Error('Upload Shopee CSV dulu.')
-      const metaText = await readText(workspace.metaFile)
-      const shopeeTexts = await Promise.all(shopeeFiles.map((f) => readText(f)))
-      const mergedShopee = shopeeTexts.map((text, index) => {
-        const lines = text.split(/\r?\n/)
-        return index === 0 ? lines.join('\n') : lines.slice(1).join('\n')
-      }).join('\n')
-      const clickText = workspace.clickFile ? await readText(workspace.clickFile) : ''
-      const result = analyze(metaText, mergedShopee, 0, clickText)
-      setAnalysis(result)
-      const savedRun = {
-        email,
-        name: workspace.name || 'Workspace',
-        metaFile: workspace.metaFileName,
-        shopeeFile: shopeeFiles.map((f) => f.name).join(', '),
-        ppn: 0,
-        analysis: result,
-      }
-      setActiveRun({ ...savedRun, createdAt: new Date().toISOString() })
-      await saveRun(savedRun)
+      const readyWorkspaces = workspaces.filter((item) => item.metaFile && item.shopeeAccounts.some((account) => account.file))
+      if (!readyWorkspaces.length) throw new Error('Lengkapi minimal satu workspace: Meta CSV dan Shopee CSV.')
+      const incomplete = workspaces.find((item) =>
+        (item.metaFile || item.clickFile || item.shopeeAccounts.some((account) => account.file)) &&
+        !(item.metaFile && item.shopeeAccounts.some((account) => account.file)))
+      if (incomplete) throw new Error(`Lengkapi Meta dan Shopee CSV di ${incomplete.name || 'workspace yang belum siap'}.`)
+      setError('')
+      const preparedRuns = await Promise.all(readyWorkspaces.map(async (workspace, index) => {
+        const metaFile = workspace.metaFile as File
+        const shopeeFiles = workspace.shopeeAccounts.flatMap((account) => account.file ? [account.file] : [])
+        const [metaText, shopeeTexts, clickText] = await Promise.all([
+          readText(metaFile),
+          Promise.all(shopeeFiles.map(readText)),
+          workspace.clickFile ? readText(workspace.clickFile) : Promise.resolve(''),
+        ])
+        return {
+          email,
+          name: workspace.name || `Workspace ${index + 1}`,
+          metaFile: metaFile.name,
+          shopeeFile: shopeeFiles.map((file) => file.name).join(', '),
+          ppn: 0,
+          analysis: analyze(metaText, mergeCsvTexts(shopeeTexts), 0, clickText),
+        }
+      }))
+      const saved = await saveRuns(preparedRuns)
+      openRun(saved[0])
       await refreshHistory(email)
     } catch (err: any) {
       setError(err.message || String(err))
     }
   }
 
-  const metaReady = !!workspace.metaFileName
-  const shopeeReadyCount = workspace.shopeeAccounts.filter((account) => account.fileName).length
-  const ready = metaReady && shopeeReadyCount > 0
+  const ready = workspaces.some((item) => item.metaFile && item.shopeeAccounts.some((account) => account.file))
+
+  function updateWorkspace(id: number, update: (workspace: WorkspaceState) => WorkspaceState) {
+    setWorkspaces((current) => current.map((item) => item.id === id ? update(item) : item))
+  }
 
   if (!email) {
     return (
@@ -1028,11 +1064,15 @@ export default function App() {
           <div className="workspaceHeading">Workspace</div>
           <p className="workspaceSubheading">1 workspace = 1 akun Meta + akun Shopee yang dipairing</p>
 
-          <section className="workspacePanel">
+          {workspaces.map((workspace, workspaceIndex) => {
+            const metaReady = Boolean(workspace.metaFileName)
+            const shopeeReadyCount = workspace.shopeeAccounts.filter((account) => account.fileName).length
+            return <section className="workspacePanel" key={workspace.id}>
             <div className="workspaceBar">
-              <span className="workspaceIndex">1</span>
-              <input className="workspaceNameInput" value={workspace.name} onChange={(event) => setWorkspace((current) => ({ ...current, name: event.target.value }))} placeholder="Nama workspace (contoh: Aisyah Store)" />
-              <span className="workspaceStatus">Meta {metaReady ? '✓' : '—'} · Shopee {shopeeReadyCount}/1 ▾</span>
+              <span className="workspaceIndex">{workspaceIndex + 1}</span>
+              <input className="workspaceNameInput" value={workspace.name} onChange={(event) => updateWorkspace(workspace.id, (current) => ({ ...current, name: event.target.value }))} placeholder="Nama workspace (contoh: Aisyah Store)" />
+              <span className="workspaceStatus">{metaReady && shopeeReadyCount ? '✓ Siap' : `Meta ${metaReady ? '✓' : '—'} · Shopee ${shopeeReadyCount}/${workspace.shopeeAccounts.length}`} ▾</span>
+              {workspaces.length > 1 ? <button type="button" className="removeWorkspace" aria-label={`Hapus workspace ${workspaceIndex + 1}`} onClick={() => setWorkspaces((current) => current.filter((item) => item.id !== workspace.id))}>×</button> : null}
             </div>
             <div className="workspaceBody">
               <div className="sectionCaption">META ADS CSV — BREAKDOWN BY CAMPAIGN + DAY</div>
@@ -1044,7 +1084,7 @@ export default function App() {
                 </div>
                 <label className="outlineButton">Upload CSV<input type="file" accept=".csv,text/csv" onChange={(event) => {
                   const file = event.target.files?.[0]
-                  if (file) setWorkspace((current) => ({ ...current, metaFileName: file.name, metaFile: file }))
+                  if (file) updateWorkspace(workspace.id, (current) => ({ ...current, metaFileName: file.name, metaFile: file }))
                   event.currentTarget.value = ''
                 }} /></label>
               </div>
@@ -1055,17 +1095,18 @@ export default function App() {
                 {workspace.shopeeAccounts.map((account, index) => (
                   <div className="shopeeAccountRow" key={account.id}>
                     <span className="workspaceIndex small">{index + 1}</span>
-                    <input value={account.name} onChange={(event) => setWorkspace((current) => ({ ...current, shopeeAccounts: current.shopeeAccounts.map((item) => item.id === account.id ? { ...item, name: event.target.value } : item) }))} placeholder="Nama akun (contoh: Akun Gamis)" />
+                    <input value={account.name} onChange={(event) => updateWorkspace(workspace.id, (current) => ({ ...current, shopeeAccounts: current.shopeeAccounts.map((item) => item.id === account.id ? { ...item, name: event.target.value } : item) }))} placeholder="Nama akun (contoh: Akun Gamis)" />
                     <label className="outlineButton compact">Pilih CSV<input type="file" accept=".csv,text/csv" onChange={(event) => {
                       const file = event.target.files?.[0]
-                      if (file) setWorkspace((current) => ({ ...current, shopeeAccounts: current.shopeeAccounts.map((item) => item.id === account.id ? { ...item, fileName: file.name, file } : item) }))
+                      if (file) updateWorkspace(workspace.id, (current) => ({ ...current, shopeeAccounts: current.shopeeAccounts.map((item) => item.id === account.id ? { ...item, fileName: file.name, file } : item) }))
                       event.currentTarget.value = ''
                     }} /></label>
                     <span className="fileState">{account.fileName || 'Belum ada'}</span>
+                    {workspace.shopeeAccounts.length > 1 ? <button type="button" className="removeWorkspace" aria-label={`Hapus akun ${index + 1}`} onClick={() => updateWorkspace(workspace.id, (current) => ({ ...current, shopeeAccounts: current.shopeeAccounts.filter((item) => item.id !== account.id) }))}>×</button> : null}
                   </div>
                 ))}
               </div>
-              <button type="button" className="dashedAction" onClick={() => setWorkspace((current) => ({ ...current, shopeeAccounts: [...current.shopeeAccounts, { id: Date.now(), name: '', fileName: '', file: null }] }))}><Plus size={14} />Tambah Akun Shopee</button>
+              <button type="button" className="dashedAction" onClick={() => updateWorkspace(workspace.id, (current) => ({ ...current, shopeeAccounts: [...current.shopeeAccounts, { id: Date.now(), name: '', fileName: '', file: null }] }))}><Plus size={14} />Tambah Akun Shopee</button>
 
               <div className="sectionCaption topGap">SHOPEE CLICK REPORT — OPSIONAL (BISA DIUPLOAD SORE/H+1)</div>
               <div className="uploadCard">
@@ -1076,17 +1117,18 @@ export default function App() {
                 </div>
                 <label className="outlineButton">Upload Klik<input type="file" accept=".csv,text/csv" onChange={(event) => {
                   const file = event.target.files?.[0]
-                  if (file) setWorkspace((current) => ({ ...current, clickFileName: file.name, clickFile: file }))
+                  if (file) updateWorkspace(workspace.id, (current) => ({ ...current, clickFileName: file.name, clickFile: file }))
                   event.currentTarget.value = ''
                 }} /></label>
               </div>
             </div>
           </section>
+          })}
 
-          <button type="button" className="dashedAction workspaceActionStub"><Plus size={14} />Tambah Workspace (Akun Meta baru)</button>
+          <button type="button" className="dashedAction workspaceActionStub" onClick={() => setWorkspaces((current) => [...current, makeWorkspace(Date.now())])}><Plus size={14} />Tambah Workspace (Akun Meta baru)</button>
 
           <section className="notesPanel">
-            <p><strong>Workspace:</strong> Tiap workspace punya 1 akun Meta + akun Shopee yang dipasangin. Data antar workspace dipisah — ROAS dan spend nggak akan nyampur.</p>
+            <p><strong>Workspace:</strong> Tiap workspace punya 1 akun Meta + akun Shopee yang dipasangin. Setiap workspace disimpan terpisah. Hasil workspace pertama langsung terbuka; buka hasil lainnya lewat History.</p>
             <p><strong>Tag_link1:</strong> Isi dengan nama campaign Meta saat buat link Shopee untuk tracking ROAS per-campaign.</p>
             <p><strong>PPN:</strong> Set di topbar dashboard setelah upload.</p>
             <p><strong>Catatan komisi:</strong> Angka di CSV affiliate (<em>Komisi Bersih</em>) bisa lebih rendah dari dashboard performa Shopee (<em>Komisi Kotor</em>) — ini normal. Shopee butuh waktu untuk memproses dan memverifikasi order sebelum masuk ke CSV. Selisih akan mengecil saat order makin banyak yang selesai.</p>

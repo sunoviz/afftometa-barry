@@ -1,0 +1,10 @@
+.data
+artifacts
+file csv
+tmp-*.csv
+.env*
+.vercel
+docs
+server/*.test.mjs
+scripts/check-browser.mjs
+scripts/check-production.mjs

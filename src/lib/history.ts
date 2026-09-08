@@ -37,3 +37,11 @@ export async function listRuns(email: string) {
 export async function deleteRun(id: number) {
   return db.runs.delete(id)
 }
+
+export async function saveRuns(runs: Omit<SavedRun, 'id' | 'createdAt'>[]): Promise<SavedRun[]> {
+  const snapshots = runs.map((run) => ({ ...run, createdAt: new Date().toISOString() }))
+  return db.transaction('rw', db.runs, async () => {
+    const ids = await db.runs.bulkAdd(snapshots, { allKeys: true })
+    return snapshots.map((run, index) => ({ ...run, id: ids[index] }))
+  })
+}

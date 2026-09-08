@@ -1,32 +1,64 @@
-# React + TypeScript + Vite
+# Barry Affiliate Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Local implementation of the authenticated dashboard at https://afftometa.online/, captured on 8 September 2026. The active entry point uses the reference HTML, CSS and browser calculations. The earlier React implementation remains in `src/` for comparison.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Requires Node.js 22.13 or later.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm ci
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Open the localhost URL printed by Vite. Login uses the reference's email whitelist flow. The default allowed email is `barry@gmail.com`.
+
+For a production build:
+
+```sh
+npm run build
+npm start
+```
+
+The production server listens on `http://127.0.0.1:3000`. The app requires its Node server for login and history; publishing `dist/` alone is insufficient. `npm run preview` also includes the local API.
+
+## Configuration and storage
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ALLOWED_EMAILS` | `barry@gmail.com` | Comma-separated server login whitelist |
+| `DATABASE_PATH` | `.data/history.sqlite` | Persistent snapshots and sessions |
+| `PORT` | `3000` | Production server port |
+| `HOST` | `127.0.0.1` | Production server bind address |
+| `COOKIE_SECURE` | `false` | Set true when serving over HTTPS |
+
+Snapshots are isolated by email and identical payloads are deduplicated. History opens an individual snapshot, without merging overlapping uploads. Storage is independent of the reference website; remote history is not copied. The former React app's IndexedDB data remains in the browser but is not imported into the new server.
+
+The frontend mirrors the reference's email-only access model. Local vendor files keep CSV parsing, charts and Excel export independent of external CDNs.
+
+## Source layout
+
+- `index.html`: reference dashboard markup.
+- `public/reference.css`, `public/reference.js`: reference styles and browser behavior, including workspace/account filters, recommendations, detail tables, mobile layout and five-sheet Excel export.
+- `public/vendor/`: PapaParse 5.4.1, Chart.js 4.4.1, SheetJS 0.18.5; original notices retained.
+- `server/`: login, sessions, SQLite history API, production serving and API tests.
+- `docs/reference.json`: capture provenance and original HTML checksum.
+- `scripts/check-browser.mjs`: browser integration and optional visual reference comparison.
+
+## Verification
+
+```sh
+npm run build
+npm run lint
+npm run test -- --run
+npm run test:server
+npm run test:browser
+```
+
+Browser tests use the three original CSVs in `file csv/`. Set `CHROMIUM_PATH` to a local Chromium executable if the default workspace browser is unavailable. Set `REFERENCE_HTML` to a captured reference HTML file to compare dashboard values, tab text and screenshots. Without it, integration checks still run and output reports `referenceCompared: false`.
+
+Screenshots and the workbook are written to the ignored `artifacts/` directory. Tests use a temporary SQLite database and never upload data to the reference service.
+
+## Production
+
+Deployed at https://afftometa-barry.vercel.app using the linked Vercel project. The Vercel API uses private Blob storage via `BLOB_READ_WRITE_TOKEN`; local runs use SQLite. Visible branding is Barry and donation prompts have been removed. Existing internal storage keys are retained for history compatibility.

@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/prepare-deploy.mjs",
     "lint": "oxlint",
-    "test": "vitest",
-    "preview": "vite preview"
+    "test": "vitest src",
+    "preview": "vite preview",
+    "start": "node server/start.mjs",
+    "test:server": "node --test server/*.test.mjs",
+    "test:browser": "node scripts/check-browser.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "dexie": "^4.4.4",
     "lucide-react": "^1.28.0",
     "papaparse": "^5.5.4",
@@ -25,8 +29,12 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "oxlint": "^1.75.0",
+    "playwright-core": "^1.55.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.0",
     "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

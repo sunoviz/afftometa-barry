@@ -1,2 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barry Affiliate Tracker</title>
 
-<!doctype html><html lang="id"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>AffToMeta Barry</title><meta name="description" content="Shopee Affiliate x Meta Ads dashboard with local history."/></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
+<!-- Private Barry build: third-party analytics/pixel removed -->
+
+<script src="/vendor/papaparse.min.js"></script>
+<script src="/vendor/chart.umd.js"></script>
+<script src="/vendor/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="/reference.css">
+</head>
+<body>
+
+<div id="up-screen">
+  <div class="up-inner">
+
+    <!-- Header -->
+    <div class="up-header">
+      <div class="up-logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 4h18v2H3zm0 4h12v2H3zm0 4h12v2H3zm0 4h18v2H3z"/></svg></div>
+        <div>
+          <div class="up-title">Barry Affiliate Tracker</div>
+          <div class="up-sub">Shopee × Meta Ads History Tracker</div>
+        </div>
+      </div>
+      <button class="btn-tutorial" onclick="openTutorial()" style="margin-bottom:0;width:auto;padding:7px 12px;font-size:12px;">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+        Panduan
+      </button>
+    </div>
+
+    <!-- Workspace label -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;">Workspace</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:1px;">1 workspace = 1 akun Meta + akun Shopee yang dipairing</div>
+      </div>
+    </div>
+
+    <!-- Workspace list -->
+    <div id="workspace-list"></div>
+
+    <!-- Add workspace -->
+    <button class="btn-add-workspace" onclick="addWorkspace()">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Tambah Workspace (Akun Meta baru)
+    </button>
+
+    <!-- Hint -->
+    <div class="up-hint">
+      <strong>Workspace:</strong> Tiap workspace punya 1 akun Meta + akun Shopee yang dipasangin. Data antar workspace dipisah — ROAS dan spend nggak akan nyampur.<br>
+      <strong>Tag_link1:</strong> Isi dengan nama campaign Meta saat buat link Shopee untuk tracking ROAS per-campaign.<br>
+      <strong>PPN:</strong> Set di topbar dashboard setelah upload.<br>
+      <strong>Catatan komisi:</strong> Angka di CSV affiliate (<em>Komisi Bersih</em>) bisa lebih rendah dari dashboard performa Shopee (<em>Komisi Kotor</em>) — ini normal. Shopee butuh waktu untuk memproses dan memverifikasi order sebelum masuk ke CSV. Selisih akan mengecil saat order makin banyak yang selesai.
+    </div>
+
+    <!-- History restore -->
+    <div class="history-box" id="history-box-upload">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div>
+          <div class="history-title">Pulihkan History Terakhir</div>
+          <div class="history-sub">Kalau halaman ke-reload, buka snapshot tersimpan tanpa upload ulang file. History tetap per-email dan tidak digabung antar periode.</div>
+        </div>
+        <button class="btn-sm og" onclick="loadHistoryList(false)">Refresh</button>
+      </div>
+      <div id="history-list-upload" class="history-list" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- CTA -->
+    <button class="btn-primary" id="btn-go" disabled onclick="runAnalysis()">
+      Mulai Analisa →
+    </button>
+
+  </div>
+</div>
+
+<div id="dash-screen">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sl-icon"><svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 4h18v2H3zm0 4h12v2H3zm0 4h12v2H3zm0 4h18v2H3z"/></svg></div>
+      <div><div class="sl-text">Affiliate</div><div class="sl-sub">Dashboard</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-tab="overview" onclick="switchTab('overview')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Overview</span>
+      </div>
+      <div class="nav-item" data-tab="campaigns" onclick="switchTab('campaigns')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span>Campaigns</span>
+      </div>
+      <div class="nav-item" data-tab="products" onclick="switchTab('products')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg><span>Produk</span>
+      </div>
+      <div class="nav-item" data-tab="funnel" onclick="switchTab('funnel')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg><span>Funnel</span>
+      </div>
+      <div class="nav-item" data-tab="attribution" onclick="switchTab('attribution')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg><span>Atribusi</span>
+      </div>
+      <div class="nav-item" data-tab="history" onclick="switchTab('history')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l4 4.01L9 12H6c0-3.86 3.14-7 7-7s7 3.14 7 7-3.14 7-7 7c-1.93 0-3.68-.78-4.95-2.05l-1.42 1.42C8.27 20 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg><span>History</span>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="nav-item" id="nav-export" onclick="exportToXLSX()" title="Export ke Excel">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg><span>Export Excel</span>
+      </div>
+      <div class="nav-item" onclick="backToUpload()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg><span>Ganti file</span>
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="tab-title">Overview</div>
+        <div class="topbar-period" id="period-lbl"></div>
+      </div>
+      <div class="date-row">
+        <input type="date" id="d-start" class="date-input" oninput="rerender()">
+        <span style="font-size:11px;color:var(--text3);">s/d</span>
+        <input type="date" id="d-end" class="date-input" oninput="rerender()">
+        <button class="btn-sm" id="btn-semua" onclick="resetDates()">Semua</button>
+        <button class="btn-sm" id="btn-terbaru" onclick="setLastDate()">Terbaru</button>
+        <div id="quick-akun-control" style="display:none;align-items:center;gap:6px;border-left:0.5px solid var(--border);padding-left:10px;margin-left:2px;">
+          <span style="font-size:11px;color:var(--text2);white-space:nowrap;">Akun</span>
+          <select id="quick-akun-select" onchange="changeQuickAkun(this.value)" style="font-size:12px;padding:5px 8px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);cursor:pointer;max-width:150px;">
+            <option value="__all__">Gabungan</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;border-left:0.5px solid var(--border);padding-left:10px;margin-left:2px;">
+          <span style="font-size:11px;color:var(--text2);white-space:nowrap;">PPN Meta</span>
+          <select id="ppn-rate" onchange="rerender()" style="font-size:12px;padding:5px 8px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);cursor:pointer;">
+            <option value="0">Tanpa PPN</option>
+            <option value="0.05">5%</option>
+            <option value="0.10">10%</option>
+            <option value="0.11">11%</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;border-left:0.5px solid var(--border);padding-left:10px;margin-left:2px;">
+          <span style="font-size:11px;color:var(--text2);white-space:nowrap;">Target/hari</span>
+          <div style="position:relative;">
+            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text2);pointer-events:none;">Rp</span>
+            <input type="text" id="target-input" value="500.000" oninput="formatTargetInput(this);rerender();" style="font-size:12px;padding:5px 8px 5px 26px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);width:110px;" placeholder="500.000">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAFFIC FILTER PANEL -->
+    <div class="traffic-filter-wrap" id="traffic-filter-wrap">
+      <div class="traffic-filter-top">
+        <span class="traffic-filter-label">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+          Filter Sumber Trafik
+        </span>
+        <div class="traffic-groups" id="traffic-groups">
+          <!-- rendered by JS -->
+        </div>
+        <span class="traffic-summary" id="traffic-summary"></span>
+      </div>
+      <div class="plat-chips" id="plat-chips">
+        <!-- rendered by JS -->
+      </div>
+      <div class="akun-filter-wrap" id="akun-filter-wrap" style="display:none;">
+        <!-- rendered by JS -->
+      </div>
+      <div class="akun-filter-wrap" id="ws-filter-wrap" style="display:none;">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+
+    <div id="alerts-section"></div>
+    <div class="progress-card" id="prog-card"></div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div id="akun-summary-strip" style="display:none;gap:10px;flex-wrap:wrap;margin-bottom:20px;"></div>
+    <div id="tab-body"></div>
+  </div>
+</div>
+
+<script src="/reference.js"></script>
+
+<!-- TUTORIAL MODAL -->
+<div class="tut-overlay" id="tut-overlay" onclick="closeTutorialOutside(event)">
+  <div class="tut-modal">
+    <div class="tut-header">
+      <div class="tut-header-left">
+        <div class="tut-modal-title">Panduan Penggunaan Dashboard</div>
+        <div class="tut-modal-sub">5 langkah untuk mulai tracking affiliate lo</div>
+      </div>
+      <button class="tut-close" onclick="closeTutorial()">×</button>
+    </div>
+    <div class="tut-tabs">
+      <button class="tut-tab active" onclick="tutGoTo(0)">Persiapan</button>
+      <button class="tut-tab" onclick="tutGoTo(1)">Export Meta</button>
+      <button class="tut-tab" onclick="tutGoTo(2)">Export Shopee</button>
+      <button class="tut-tab" onclick="tutGoTo(3)">Baca Dashboard</button>
+      <button class="tut-tab" onclick="tutGoTo(4)">Atribusi Tag</button>
+    </div>
+    <div class="tut-body">
+      <div class="tut-section active" id="tut-0">
+        <div class="tut-step"><div class="tut-num">1</div><div><div class="tut-step-title">Apa yang dibutuhkan</div><div class="tut-step-desc">Dashboard ini menggabungkan dua sumber data: <strong>Meta Ads CSV</strong> (data spend & klik iklan) dan <strong>Shopee Affiliate CSV</strong> (data komisi). Di versi Barry, hasil analisa bisa disimpan ke server dan dibuka lagi lewat menu History.</div></div></div>
+        <div class="tut-step"><div class="tut-num">2</div><div><div class="tut-step-title">Samakan range tanggal</div><div class="tut-step-desc">Pastikan range tanggal Meta CSV dan Shopee CSV <strong>sama persis</strong>. Kalau Meta hanya 1 hari tapi Shopee 7 hari, ROAS yang muncul akan menyesatkan — dashboard akan otomatis kasih peringatan kuning.</div><div class="tut-callout"><strong>Contoh yang benar:</strong> Meta export 24–30 Mar · Shopee export 24–30 Mar<br><strong>Contoh yang salah:</strong> Meta export 30 Mar · Shopee export 24–30 Mar</div></div></div>
+        <div class="tut-step"><div class="tut-num">3</div><div><div class="tut-step-title">Format file</div><div class="tut-step-desc">Kedua file harus dalam format <strong>.CSV</strong>. Jangan ubah nama kolom atau format isi file — dashboard membaca nama kolom secara langsung dari header CSV.</div></div></div>
+      </div>
+      <div class="tut-section" id="tut-1">
+        <div class="tut-step"><div class="tut-num">1</div><div><div class="tut-step-title">Buka Meta Ads Manager</div><div class="tut-step-desc">Pergi ke <strong>Ads Manager → Campaigns</strong>. Pastikan lo berada di level Campaign, bukan Ad Sets atau Ads.</div></div></div>
+        <div class="tut-step"><div class="tut-num">2</div><div><div class="tut-step-title">Set kolom yang dibutuhkan</div><div class="tut-step-desc">Klik <strong>Columns → Customize Columns</strong>, tambahkan:<br><br><code>Amount spent</code> · <code>Link clicks</code> atau <code>Unique link clicks</code> · <code>Landing page views</code> · <code>Impressions</code> · <code>CPC (link)</code> · <code>CPM</code> · <code>CTR (link)</code></div></div></div>
+        <div class="tut-step"><div class="tut-num">3</div><div><div class="tut-step-title">Set breakdown dan export</div><div class="tut-step-desc">Klik <strong>Breakdown → By Time → Day</strong> supaya data per hari muncul. Pilih range tanggal yang diinginkan, lalu klik <strong>Export → Export Table Data (CSV)</strong>.</div><div class="tut-callout"><strong>Penting:</strong> Tanpa breakdown by Day, semua data akan jadi satu baris dan chart harian tidak bisa ditampilkan.</div></div></div>
+      </div>
+      <div class="tut-section" id="tut-2">
+        <div class="tut-step"><div class="tut-num">1</div><div><div class="tut-step-title">Buka panel Shopee Affiliate</div><div class="tut-step-desc">Login ke <strong>affiliate.shopee.co.id</strong> → pilih menu <strong>Komisi</strong> atau <strong>Commission Report</strong>.</div></div></div>
+        <div class="tut-step"><div class="tut-num">2</div><div><div class="tut-step-title">Set filter tanggal</div><div class="tut-step-desc">Set range tanggal yang <strong>sama dengan Meta CSV</strong>. Shopee menggunakan <strong>Waktu Pemesanan</strong> (tanggal order) sebagai basis filter.</div></div></div>
+        <div class="tut-step"><div class="tut-num">3</div><div><div class="tut-step-title">Export CSV</div><div class="tut-step-desc">Klik tombol <strong>Export</strong> atau <strong>Unduh</strong>. File yang didownload langsung bisa diupload ke dashboard tanpa modifikasi apapun.</div><div class="tut-callout"><strong>Catatan:</strong> Order dengan status <strong>Dibatalkan</strong> otomatis dikeluarkan. Order <strong>Tertunda</strong> tetap dihitung karena cancel rate hanya sekitar 1–2%.<br><br><strong>Soal perbedaan angka komisi:</strong> Wajar kalau total komisi di sini lebih rendah dari angka di dashboard Shopee. CSV pakai <em>Komisi Bersih</em> (sudah diverifikasi), dashboard Shopee pakai <em>Komisi Kotor</em> (belum final). Selisihnya mengecil kalau export dilakukan beberapa hari setelah periode berakhir.</div></div></div>
+      </div>
+      <div class="tut-section" id="tut-3">
+        <div class="tut-step"><div class="tut-num">1</div><div><div class="tut-step-title">Filter Sumber Trafik</div><div class="tut-step-desc">Dashboard memisahkan trafik ke 4 grup: <strong>Social Media</strong> (Facebook/Instagram), <strong>Shopee Video</strong>, <strong>Shopee Live</strong>, dan <strong>Organik</strong>. Klik grup atau platform individual untuk lihat performa masing-masing channel secara terpisah.</div><div class="tut-callout"><strong>Use case:</strong> Lo lagi live Shopee sambil jalan iklan Meta — filter ke "Social Media" buat lihat ROAS iklan aja, atau ke "Shopee Live" buat lihat komisi organik dari live.</div></div></div>
+        <div class="tut-step"><div class="tut-num">2</div><div><div class="tut-step-title">Warna ROAS sebagai sinyal cepat</div><div class="tut-step-desc"><span class="tut-badge tut-badge-gr">Hijau ≥ 1.5x</span> kandidat scale bertahap kalau tidak ditopang 1–2 komisi jumbo<br><span class="tut-badge tut-badge-am">Amber 1–1.49x</span> HOLD, jangan scale selama belum kuat<br><span class="tut-badge tut-badge-rd">Merah &lt; 1x</span> Rugi; kalau spend ≥ Rp60rb, KILL</div></div></div>
+        <div class="tut-step"><div class="tut-num">3</div><div><div class="tut-step-title">LP Rate di tab Campaigns</div><div class="tut-step-desc">Landing Page Rate = % orang yang klik iklan Meta dan benar-benar sampai ke halaman Shopee. <strong>Di bawah 20% (merah) berarti ada price mismatch.</strong></div><div class="tut-callout"><strong>Target LP Rate:</strong> Hijau ≥ 40% · Amber 20–40% · Merah &lt; 20%</div></div></div>
+        <div class="tut-step"><div class="tut-num">4</div><div><div class="tut-step-title">Zero Komisi rate</div><div class="tut-step-desc">Persentase order item yang masuk tapi menghasilkan Rp 0 komisi. Idealnya di bawah 30%.</div></div></div>
+      </div>
+      <div class="tut-section" id="tut-4">
+        <div class="tut-step"><div class="tut-num">1</div><div><div class="tut-step-title">Kenapa tag penting</div><div class="tut-step-desc">Tanpa tag, dashboard tidak bisa tahu komisi mana yang berasal dari campaign Meta mana. Tab Atribusi akan kosong dan ROAS per-campaign tidak bisa dihitung.</div></div></div>
+        <div class="tut-step"><div class="tut-num">2</div><div><div class="tut-step-title">Cara set tag di Shopee</div><div class="tut-step-desc">Saat generate link affiliate di panel Shopee, isi kolom <code>Tag_link1</code> dengan nama campaign Meta lo. Gunakan format yang mudah diidentifikasi:<br><br>Campaign Meta: <code>cetak barcode 1</code> → Tag: <code>cetak-barcode-1</code></div><div class="tut-callout"><strong>Aturan matching:</strong> Dashboard mencocokkan tag ke campaign secara fuzzy — kalau tag mengandung sebagian nama campaign atau sebaliknya, akan otomatis ter-match.</div></div></div>
+        <div class="tut-step"><div class="tut-num">3</div><div><div class="tut-step-title">Satu link per campaign</div><div class="tut-step-desc">Untuk tracking yang akurat: <strong>satu campaign Meta = satu link Shopee dengan tag unik</strong>. Jangan pakai link yang sama untuk dua campaign berbeda.</div></div></div>
+      </div>
+    </div>
+    <div class="tut-nav">
+      <div class="tut-progress" id="tut-dots"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-tut" id="tut-prev" onclick="tutPrev()">← Sebelumnya</button>
+        <button class="btn-tut primary" id="tut-next" onclick="tutNext()">Selanjutnya →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<footer style="margin-left:200px;padding:16px 28px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;gap:6px;">
+  <span style="font-size:11px;color:#444;">© 2026 Barry Affiliate Tracker — private server build</span>
+</footer>
+</body>
+</html>

@@ -57,3 +57,14 @@ describe('parser', () => {
     expect(result.tags.find(t => t.tag === 'manurung')?.clickCount).toBe(1)
   })
 })
+
+ describe('order aggregation', () => {
+  it('counts a multi-product order once per day and tag while summing commissions', () => {
+    const csv = `${shopeeBarry}\n260803BA4WYXED,Tertunda,2026-08-02 23:54:21,2026-08-02 21:33:02,Produk C,10000,100,manurung,Facebook`
+    const result = analyze(metaBarry, csv, 0)
+    expect(result.totals.orders).toBe(2)
+    expect(result.daily[0].orders).toBe(2)
+    expect(result.tags[0].orders).toBe(2)
+    expect(result.totals.commission).toBeCloseTo(2581.745)
+  })
+})
